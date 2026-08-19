@@ -128,7 +128,7 @@ final class InitDatabaseTables extends AbstractMigration
         $plainPassword = 'adminutamacai2025';
         $dataAdmin = [
             [
-                'nama'         => 'Super Admin',
+                'nama'         => 'Panca Aulia',
                 'username'     => 'superadmincai2025',
                 'password'     => password_hash($plainPassword, PASSWORD_DEFAULT),
                 'role'         => 'superadmin',

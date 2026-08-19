@@ -1,153 +1,201 @@
+<?php
+session_start();
+?>
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Event CAI 2026</title>
+    <title>Login Access Card - Event CAI 2026</title>
     <link rel="icon" type="image/png" href="assets/images/Logo 1x1.png">
 
-    <!-- 1. Tailwind CSS untuk styling -->
+    <!-- 1. Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- 2. Tailwind CSS untuk styling -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- 2. Font Awesome untuk ikon -->
+    <!-- 3. Font Awesome untuk ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- 3. Pustaka untuk Scan Barcode -->
+    <!-- 4. Pustaka untuk Scan Barcode / QR Code -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
-        /* Style tambahan untuk memastikan video scanner tidak terlalu besar di desktop */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         #reader {
-            max-width: 500px;
-            margin: 20px auto;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
             border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 0.75rem;
+            overflow: hidden;
         }
 
-        .message-box {
-            padding: 1rem;
+        #reader video {
             border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            font-weight: 500;
+            object-fit: cover;
         }
 
-        .message-error {
-            background-color: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden transition-all duration-300 p-6 sm:p-8">
 
-        <!-- Kontainer untuk Form Login -->
-        <div id="loginContainer">
-            <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto">
-            <h2 class="text-3xl font-bold text-center text-gray-800">Selamat Datang</h2>
-            <p class="text-center text-gray-500">Silakan masuk untuk melanjutkan</p>
-
-            <?php
-            session_start();
-            if (isset($_SESSION['login_message'])) {
-                $message = $_SESSION['login_message'];
-                echo '<div class="message-box message-' . htmlspecialchars($message['type']) . '">' . htmlspecialchars($message['text']) . '</div>';
-                unset($_SESSION['login_message']);
-            }
-            ?>
-
-            <!-- Form Login -->
-            <form id="loginForm" class="mt-8 space-y-6" action="proses_login.php" method="POST">
-                <!-- Input Username -->
-                <div>
-                    <label for="username" class="text-sm font-medium text-gray-700">Username</label>
-                    <input id="username" name="username" type="text" required
-                        class="w-full px-4 py-2 mt-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Masukkan username Anda">
-                </div>
-
-                <!-- Input Password -->
-                <div>
-                    <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-                    <input id="password" name="password" type="password" required
-                        class="w-full px-4 py-2 mt-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Masukkan password Anda">
-                </div>
-
-                <!-- Grup Tombol -->
-                <div class="flex items-center justify-center space-x-4 pt-4">
-                    <!-- Tombol Login -->
-                    <button type="submit"
-                        class="flex-1 inline-flex items-center justify-center px-4 py-3 text-base font-semibold text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                        <i class="fas fa-sign-in-alt mr-2"></i> Login
-                    </button>
-                    <!-- Tombol Scan Barcode -->
-                    <button type="button" id="scanButton"
-                        class="flex-1 inline-flex items-center justify-center px-4 py-3 text-base font-semibold text-gray-700 bg-gray-200 border border-transparent rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all">
-                        <i class="fas fa-barcode mr-2"></i> Access Card
-                    </button>
-                </div>
-            </form>
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto mb-3 object-contain drop-shadow-sm">
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Login Access Card</h1>
+            <p class="text-sm text-slate-500 mt-1">Event CAI 2026</p>
         </div>
 
-        <!-- Kontainer untuk Scanner Barcode (tersembunyi) -->
-        <div id="scannerContainer" class="hidden text-center">
-            <h3 class="text-2xl font-bold text-gray-800">Scan Barcode Anda</h3>
-            <p class="text-gray-500">Arahkan kamera atau pilih dari galeri</p>
-            <div id="reader" class="border-2 border-gray-200"></div>
+        <!-- Pesan Error / Notifikasi Session dari Server -->
+        <?php if (isset($_SESSION['login_message'])): ?>
+            <?php
+            $msg = $_SESSION['login_message'];
+            $isError = ($msg['type'] ?? 'error') === 'error';
+            unset($_SESSION['login_message']);
+            ?>
+            <div class="mb-5 p-3.5 rounded-xl text-sm font-medium flex items-start space-x-3 <?php echo $isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'; ?>">
+                <i class="fas <?php echo $isError ? 'fa-circle-exclamation' : 'fa-circle-check'; ?> text-lg mt-0.5 flex-shrink-0"></i>
+                <div class="flex-1"><?php echo htmlspecialchars($msg['text']); ?></div>
+            </div>
+        <?php endif; ?>
 
-            <!-- Pemisah -->
-            <div class="my-4 flex items-center"><span class="flex-grow bg-gray-300 h-px"></span><span class="mx-4 text-gray-500 font-medium">ATAU</span><span class="flex-grow bg-gray-300 h-px"></span></div>
-
-            <!-- Tombol untuk scan dari file -->
-            <div>
-                <input type="file" id="qr-input-file" accept="image/*" class="hidden">
-                <button type="button" id="scanFileButton" class="w-full inline-flex items-center justify-center px-4 py-2 text-base font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
-                    <i class="fas fa-image mr-2"></i> Pilih Gambar dari Galeri
-                </button>
+        <!-- Tampilan Pilihan Metode Scan -->
+        <div id="selectionContainer" class="space-y-4">
+            <div class="text-center mb-4">
+                <p class="text-sm font-medium text-slate-600">Pilih cara pemindaian QR Code Anda:</p>
             </div>
 
-            <button id="closeScannerButton" class="w-full mt-6 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none">Batal</button>
+            <!-- Tombol 1: Pindai dengan Kamera -->
+            <button type="button" id="startScannerBtn"
+                class="w-full group flex items-center p-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center text-xl mr-4 flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <div class="text-left flex-1">
+                    <div class="font-semibold text-base">Pindai dengan Kamera</div>
+                    <div class="text-xs text-blue-100 mt-0.5">Scan langsung menggunakan kamera perangkat</div>
+                </div>
+                <i class="fas fa-chevron-right text-blue-200 text-sm ml-2 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+
+            <!-- Tombol 2: Pilih dari Galeri -->
+            <input type="file" id="qr-input-file" accept="image/*" class="hidden">
+            <button type="button" id="scanFileBtn"
+                class="w-full group flex items-center p-4 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl shadow-sm hover:shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+                <div class="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-xl text-slate-600 mr-4 flex-shrink-0 group-hover:scale-105 transition-transform">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="text-left flex-1">
+                    <div class="font-semibold text-base">Pilih dari Galeri</div>
+                    <div class="text-xs text-slate-500 mt-0.5">Unggah foto atau screenshot QR Code</div>
+                </div>
+                <i class="fas fa-chevron-right text-slate-400 text-sm ml-2 group-hover:translate-x-1 transition-transform"></i>
+            </button>
         </div>
 
-        <!-- Area untuk menampilkan pesan error/sukses -->
-        <div id="messageArea" class="mt-4 text-center text-sm font-medium"></div>
+        <!-- Tampilan Scanner Kamera (Hidden Default) -->
+        <div id="scannerContainer" class="hidden text-center space-y-4">
+            <div class="bg-blue-50 text-blue-800 text-xs font-medium px-3 py-2 rounded-lg flex items-center justify-center space-x-2">
+                <i class="fas fa-info-circle"></i>
+                <span>Arahkan kamera ke QR Code pada kartu akses Anda</span>
+            </div>
+
+            <!-- Viewfinder Reader -->
+            <div id="reader" class="bg-black/5 min-h-[260px] flex items-center justify-center"></div>
+
+            <!-- Tombol Tutup Scanner -->
+            <button type="button" id="closeScannerBtn"
+                class="w-full py-2.5 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-sm rounded-xl transition-all duration-200 flex items-center justify-center space-x-2">
+                <i class="fas fa-arrow-left"></i>
+                <span>Kembali ke Pilihan</span>
+            </button>
+        </div>
+
+        <!-- Status / Feedback Message Dinamis -->
+        <div id="statusMessage" class="hidden mt-4 p-3 rounded-xl text-sm font-medium text-center"></div>
 
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const loginContainer = document.getElementById('loginContainer');
+            const selectionContainer = document.getElementById('selectionContainer');
             const scannerContainer = document.getElementById('scannerContainer');
-            const scanButton = document.getElementById('scanButton');
-            const closeScannerButton = document.getElementById('closeScannerButton');
-            const messageArea = document.getElementById('messageArea');
+            const startScannerBtn = document.getElementById('startScannerBtn');
+            const closeScannerBtn = document.getElementById('closeScannerBtn');
+            const scanFileBtn = document.getElementById('scanFileBtn');
             const qrInputFile = document.getElementById('qr-input-file');
-            const scanFileButton = document.getElementById('scanFileButton');
+            const statusMessage = document.getElementById('statusMessage');
 
             let html5QrCodeScanner = null;
 
-            function showMessage(message, isError = false) {
-                messageArea.textContent = message;
-                messageArea.className = 'mt-4 text-center text-sm font-medium ' + (isError ? 'text-red-600' : 'text-green-600');
+            function showStatus(text, type = 'info') {
+                statusMessage.textContent = text;
+                statusMessage.className = 'mt-4 p-3 rounded-xl text-sm font-medium text-center ';
+                
+                if (type === 'error') {
+                    statusMessage.className += 'bg-red-50 text-red-700 border border-red-200';
+                } else if (type === 'success') {
+                    statusMessage.className += 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                } else {
+                    statusMessage.className += 'bg-blue-50 text-blue-700 border border-blue-200 pulse-animation';
+                }
+                statusMessage.classList.remove('hidden');
             }
 
+            function hideStatus() {
+                statusMessage.textContent = '';
+                statusMessage.classList.add('hidden');
+            }
+
+            // Callback ketika QR Code terdeteksi
             const onScanSuccess = (decodedText, decodedResult) => {
-                showMessage(`Scan Berhasil! Mengalihkan...`, false);
-                stopScanner();
-                window.location.href = `proses_login.php?barcode=${encodeURIComponent(decodedText)}`;
+                showStatus('QR Code terdeteksi! Memverifikasi...', 'success');
+                stopScanner().then(() => {
+                    // Redirect ke proses_login.php
+                    window.location.href = `proses_login.php?barcode=${encodeURIComponent(decodedText)}`;
+                }).catch(() => {
+                    window.location.href = `proses_login.php?barcode=${encodeURIComponent(decodedText)}`;
+                });
             };
 
-            function startScanner() {
+            function stopScanner() {
+                if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
+                    return html5QrCodeScanner.stop();
+                }
+                return Promise.resolve();
+            }
+
+            // Buka Scanner Kamera
+            function openCameraScanner() {
+                hideStatus();
+                selectionContainer.classList.add('hidden');
+                scannerContainer.classList.remove('hidden');
+
                 if (!html5QrCodeScanner) {
                     html5QrCodeScanner = new Html5Qrcode("reader");
                 }
-                loginContainer.classList.add('hidden');
-                scannerContainer.classList.remove('hidden');
-                showMessage('Membuka kamera...', false);
+
+                showStatus('Membuka kamera...', 'info');
+
                 const config = {
                     fps: 10,
                     qrbox: {
@@ -155,69 +203,64 @@
                         height: 250
                     }
                 };
-                html5QrCodeScanner.start({
-                        facingMode: "environment"
-                    }, config, onScanSuccess)
-                    .catch(err => {
-                        showMessage('Error: Tidak dapat mengakses kamera.', true);
-                        // closeScanner();
-                    });
+
+                html5QrCodeScanner.start(
+                    { facingMode: "environment" },
+                    config,
+                    onScanSuccess
+                ).then(() => {
+                    hideStatus();
+                }).catch(err => {
+                    console.error("Gagal membuka kamera:", err);
+                    showStatus('Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan.', 'error');
+                });
             }
 
-            // **PERBAIKAN 1: Fungsi stopScanner dibuat lebih andal**
-            function stopScanner() {
-                if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
-                    return html5QrCodeScanner.stop();
-                }
-                return Promise.resolve(); // Kembalikan promise kosong jika tidak sedang memindai
-            }
-
-            function closeScanner() {
+            // Tutup Scanner Kamera dan Kembali
+            function closeCameraScanner() {
                 stopScanner().then(() => {
                     scannerContainer.classList.add('hidden');
-                    loginContainer.classList.remove('hidden');
-                    showMessage('');
-                }).catch(err => console.error("Gagal menutup scanner.", err));
+                    selectionContainer.classList.remove('hidden');
+                    hideStatus();
+                }).catch(err => {
+                    console.error("Error menghentikan kamera:", err);
+                    scannerContainer.classList.add('hidden');
+                    selectionContainer.classList.remove('hidden');
+                    hideStatus();
+                });
             }
 
-            scanButton.addEventListener('click', startScanner);
-            closeScannerButton.addEventListener('click', closeScanner);
+            startScannerBtn.addEventListener('click', openCameraScanner);
+            closeScannerBtn.addEventListener('click', closeCameraScanner);
 
-            scanFileButton.addEventListener('click', () => {
+            // Buka file dialog galeri
+            scanFileBtn.addEventListener('click', () => {
+                qrInputFile.value = ''; // Reset input agar event change terpanggil meski file sama
                 qrInputFile.click();
             });
 
+            // Handle file QR Code yang dipilih dari galeri
             qrInputFile.addEventListener('change', e => {
                 const file = e.target.files[0];
-                if (!file) {
-                    return;
-                }
+                if (!file) return;
 
                 if (!html5QrCodeScanner) {
                     html5QrCodeScanner = new Html5Qrcode("reader");
                 }
 
-                // **PERBAIKAN 2: Hentikan kamera (jika berjalan) sebelum memindai file**
-                showMessage('Menghentikan kamera (jika aktif)...', false);
+                showStatus('Memindai gambar QR Code...', 'info');
+
                 stopScanner().then(() => {
-                    showMessage('Memindai gambar...', false);
                     html5QrCodeScanner.scanFile(file, true)
                         .then(onScanSuccess)
                         .catch(err => {
-                            showMessage('Gagal memindai. Pastikan gambar jelas dan berisi QR Code.', true);
-                            console.error(`Error scanning file. Reason: ${err}`);
+                            console.error("Gagal scan gambar:", err);
+                            showStatus('QR Code tidak terdeteksi pada gambar. Pastikan gambar jelas dan memiliki QR Code.', 'error');
                         });
                 }).catch(err => {
-                    showMessage('Error saat mencoba memindai file.', true);
-                    console.error("Gagal menghentikan kamera sebelum scan file.", err);
+                    console.error("Gagal stop scanner sebelum scan file:", err);
+                    showStatus('Terjadi kesalahan saat memproses gambar.', 'error');
                 });
-            });
-
-            // Menangani submit form login standar
-            loginForm.addEventListener('submit', function(e) {
-                // e.preventDefault(); // Hapus komentar ini jika ingin menangani login via JavaScript (AJAX)
-                showMessage('Mencoba login...', false);
-                // Form akan di-submit ke action="proses_login.php" secara normal
             });
         });
     </script>
