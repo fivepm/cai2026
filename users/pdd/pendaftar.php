@@ -11,7 +11,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] != 'sie_pdd') {
 // 2. KONEKSI & PENGATURAN
 require_once '../../config/config.php';
 $upload_dir = '../../uploads/surat_izin/';
-$sql = "SELECT nama, jenis_kelamin, kelompok, barcode FROM peserta";
+$sql = "SELECT nama, jenis_kelamin, kelompok, barcode, ukuran_jersey FROM peserta";
 
 // Buat subquery untuk memungkinkan filtering pada data gabungan
 $base_query = "SELECT * FROM ({$sql}) AS semua_pendaftar";
@@ -49,6 +49,28 @@ if ($result_peserta) {
 
 // Hitung total
 $total_hadir = $stats['hadir_lakilaki'] + $stats['hadir_perempuan'];
+
+// =======================================================
+// Rekap Ukuran Jersey
+// =======================================================
+$jersey_order = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', '8XL', '9XL', '10XL', '11XL'];
+$jersey_stats = array_fill_keys($jersey_order, 0);
+$jersey_stats['(Belum diisi)'] = 0;
+
+$result_jersey = $conn->query("SELECT COALESCE(NULLIF(TRIM(ukuran_jersey),''), '(Belum diisi)') AS ukuran, COUNT(id) AS jumlah FROM peserta GROUP BY ukuran ORDER BY ukuran");
+if ($result_jersey) {
+    while ($row = $result_jersey->fetch_assoc()) {
+        $uk = $row['ukuran'];
+        if (array_key_exists($uk, $jersey_stats)) {
+            $jersey_stats[$uk] = (int)$row['jumlah'];
+        } else {
+            $jersey_stats[$uk] = (int)$row['jumlah'];
+        }
+    }
+}
+// Hapus ukuran yang 0 dan tidak terpakai
+$jersey_stats = array_filter($jersey_stats, fn($v) => $v > 0);
+$total_jersey = array_sum($jersey_stats);
 // =======================================================
 
 $nama_user = $_SESSION['user_nama'];
@@ -90,26 +112,8 @@ $role_user = $_SESSION['user_role'];
                 document.body.removeChild(t);
             }, 100);
         },
-        downloadAllQrCodes(participants) {
-            if (participants.length === 0) {
-                alert('Tidak ada data peserta untuk diunduh.');
-                return;
-            }
-            this.isDownloading = true;
-            let count = 0;
-            
-            const interval = setInterval(() => {
-                if (count >= participants.length) {
-                    clearInterval(interval);
-                    this.isDownloading = false;
-                    alert('Semua QR Code selesai diunduh.');
-                    return;
-                }
-                const participant = participants[count];
-                const filename = `qrcode-${participant.nama.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-                this.downloadQrCode(participant.barcode, filename);
-                count++;
-            }, 500); // Jeda 500ms (setengah detik) antar unduhan
+        downloadAllQrCodesZip() {
+            window.location.href = 'download_qr_zip.php';
         }
         }"
         @keydown.escape.window="isQrCodeModalOpen=false"
@@ -126,20 +130,24 @@ $role_user = $_SESSION['user_role'];
         <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-gray-100">
             <h1 class="text-center text-3xl font-semibold text-gray-800">Rekapitulasi Pendaftar - Desa Banguntapan 1</h1>
 
-            <div class="py-3 flex flex-col items-center">
-                <button @click="downloadAllQrCodes(allParticipants)" :disabled="isDownloading" class="mb-1 px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 flex items-center">
-                    <i class="fas fa-cloud-download-alt mr-2"></i>Download QR Code
-                    <span x-text="isDownloading ? 'Mengunduh...' : 'Download Semua QR'"></span>
+            <div class="py-3 flex flex-wrap justify-center gap-3">
+                <!-- Tombol Download ZIP QR Code -->
+                <button @click="downloadAllQrCodesZip()"
+                        class="px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors">
+                    <i class="fas fa-file-zipper"></i>
+                    Download Semua QR Code (.zip)
                 </button>
-                <a href="export_peserta" class="px-4 py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 flex items-center">
-                    <i class="fas fa-file-csv mr-2"></i>Export ke CSV
+                <!-- Tombol Export CSV -->
+                <a href="export_peserta" class="px-4 py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 flex items-center gap-2 transition-colors">
+                    <i class="fas fa-file-csv"></i>Export ke CSV
                 </a>
             </div>
 
             <!-- ======================================================= -->
-            <!-- KODE BARU: Tampilan Statistik -->
+            <!-- Tampilan Statistik -->
             <!-- ======================================================= -->
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-1 gap-6">
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
                 <!-- Card Peserta Hadir -->
                 <div class="bg-white p-6 rounded-lg shadow-md flex flex-col items-center">
                     <div class="flex items-center mb-2">
@@ -147,15 +155,51 @@ $role_user = $_SESSION['user_role'];
                             <i class="fas fa-user-check text-white text-xl"></i>
                         </div>
                         <div>
-                            <p class="text-gray-500">Total Hadir</p>
+                            <p class="text-gray-500">Total Pendaftar</p>
                             <p class="text-3xl font-bold text-gray-900"><?php echo $total_hadir; ?></p>
                         </div>
                     </div>
-                    <div class="mt-4 border-t pt-2 text-sm text-gray-600 space-y-1">
+                    <div class="mt-4 border-t pt-2 text-sm text-gray-600 space-y-1 w-full text-center">
                         <p>Laki-laki: <span class="font-semibold"><?php echo $stats['hadir_lakilaki']; ?></span></p>
                         <p>Perempuan: <span class="font-semibold"><?php echo $stats['hadir_perempuan']; ?></span></p>
                     </div>
                 </div>
+
+                <!-- Card Rekap Ukuran Jersey -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <div class="p-3 bg-indigo-500 rounded-full mr-4">
+                            <i class="fas fa-shirt text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Rekap Ukuran Jersey</p>
+                            <p class="text-3xl font-bold text-gray-900"><?php echo $total_jersey; ?> <span class="text-base font-normal text-gray-500">peserta</span></p>
+                        </div>
+                    </div>
+                    <div class="border-t pt-3">
+                        <?php if (empty($jersey_stats)): ?>
+                            <p class="text-sm text-gray-400 text-center">Belum ada data ukuran jersey.</p>
+                        <?php else: ?>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                <?php foreach ($jersey_stats as $ukuran => $jumlah): ?>
+                                    <div class="flex justify-between items-center py-1 border-b border-gray-100">
+                                        <span class="font-medium text-gray-700">
+                                            <?php if ($ukuran === '(Belum diisi)'): ?>
+                                                <span class="text-gray-400 italic"><?php echo htmlspecialchars($ukuran); ?></span>
+                                            <?php else: ?>
+                                                <?php echo htmlspecialchars($ukuran); ?>
+                                            <?php endif; ?>
+                                        </span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                                            <?php echo $jumlah; ?>
+                                        </span>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
             </div>
             <!-- ======================================================= -->
 
@@ -168,23 +212,33 @@ $role_user = $_SESSION['user_role'];
                                 <th class="px-6 py-3">Nama</th>
                                 <th class="px-6 py-3">Kelompok</th>
                                 <th class="px-6 py-3">Jenis Kelamin</th>
-                                <th class="px-6 py-3">Barcode</th>
+                                <th class="px-6 py-3">Ukuran Jersey</th>
+                                <th class="px-6 py-3">Barcode / QR</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             <?php
                             $no = 1;
                             foreach ($pendaftar_list as $pendaftar): ?>
-                                <tr>
-                                    <td class="px-6 py-4"><?php echo $no++; ?></td>
-                                    <td class="px-6 py-4"><?php echo htmlspecialchars($pendaftar['nama']); ?></td>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4 text-gray-500"><?php echo $no++; ?></td>
+                                    <td class="px-6 py-4 font-medium"><?php echo htmlspecialchars($pendaftar['nama']); ?></td>
                                     <td class="px-6 py-4"><?php echo htmlspecialchars($pendaftar['kelompok']); ?></td>
                                     <td class="px-6 py-4"><?php echo htmlspecialchars($pendaftar['jenis_kelamin']); ?></td>
+                                    <td class="px-6 py-4">
+                                        <?php if (!empty($pendaftar['ukuran_jersey'])): ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                                                <?php echo htmlspecialchars($pendaftar['ukuran_jersey']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-gray-300 text-xs italic">—</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="px-6 py-4 text-sm">
-                                        <button @click="showQrCode('<?php echo htmlspecialchars($pendaftar['barcode']); ?>', '<?php echo htmlspecialchars($pendaftar['nama'], ENT_QUOTES); ?>')" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 mr-2">
+                                        <button @click="showQrCode('<?php echo htmlspecialchars($pendaftar['barcode']); ?>', '<?php echo htmlspecialchars($pendaftar['nama'], ENT_QUOTES); ?>')" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 mr-2" title="Lihat QR Code">
                                             <i class="fas fa-qrcode"></i>
                                         </button>
-                                        <button @click="downloadQrCode('<?php echo htmlspecialchars($pendaftar['barcode']); ?>', 'qrcode-<?php echo htmlspecialchars($pendaftar['nama']); ?>.png')" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">
+                                        <button @click="downloadQrCode('<?php echo htmlspecialchars($pendaftar['barcode']); ?>', 'qrcode-<?php echo htmlspecialchars($pendaftar['nama']); ?>.png')" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600" title="Download QR Code">
                                             <i class="fas fa-download"></i>
                                         </button>
                                     </td>
@@ -216,5 +270,6 @@ $role_user = $_SESSION['user_role'];
 <script>
     const allParticipants = <?php echo json_encode($pendaftar_list); ?>;
 </script>
+
 
 </html>

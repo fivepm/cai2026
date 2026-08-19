@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Event CAI 2025</title>
+    <title>Login - Event CAI 2026</title>
     <link rel="icon" type="image/png" href="uploads/Logo 1x1.png">
 
     <!-- 1. Tailwind CSS untuk styling -->
@@ -81,7 +81,7 @@
                 <div class="flex items-center justify-center space-x-4 pt-4">
                     <!-- Tombol Login -->
                     <button type="submit"
-                        class="flex-1 inline-flex items-center justify-center px-4 py-3 text-base font-semibold text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        class="flex-1 inline-flex items-center justify-center px-4 py-3 text-base font-semibold text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
                         <i class="fas fa-sign-in-alt mr-2"></i> Login
                     </button>
                     <!-- Tombol Scan Barcode -->
