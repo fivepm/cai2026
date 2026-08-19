@@ -82,8 +82,8 @@ $role_user = $_SESSION['user_role'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Pendaftar - Event CAI 2025</title>
-    <link rel="icon" type="image/png" href="../../uploads/Logo 1x1.png">
+    <title>Rekap Pendaftar - CAI 2026</title>
+    <link rel="icon" type="image/png" href="../../assets/images/Logo 1x1.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -118,9 +118,9 @@ $role_user = $_SESSION['user_role'];
         }"
         @keydown.escape.window="isQrCodeModalOpen=false"
         class="flex-1 flex flex-col overflow-hidden">
-        <header class="flex items-center justify-between px-6 py-4 bg-white border-b-4 border-red-600">
-            <img src="../../uploads/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-10 w-auto">
-            <h2 class="px-3 text-xl font-bold text-center text-gray-800">CAI Banguntapan 1 Tahun 2025</h2>
+        <header class="flex items-center justify-between px-6 py-4 bg-white border-b-4 border-blue-600">
+            <img src="../../assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-10 w-auto">
+            <h2 class="px-3 text-xl font-bold text-center text-gray-800">CAI Banguntapan 1 - Tahun 2026</h2>
             <div class="flex-1"></div>
             <div x-data="{ dropdownOpen: false }" class="relative"><button @click="dropdownOpen = !dropdownOpen" class="relative z-10 block"><span class="font-medium text-gray-700">Halo, <?php echo htmlspecialchars($nama_user); ?>!</span><i class="fas fa-chevron-down text-xs ml-1"></i></button>
                 <div x-show="dropdownOpen" @click.away="dropdownOpen = false" class="absolute right-0 z-20 w-48 py-2 mt-2 bg-white rounded-md shadow-xl" x-transition><a href="logout.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-500 hover:text-white">Logout</a></div>
@@ -128,7 +128,7 @@ $role_user = $_SESSION['user_role'];
         </header>
 
         <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-gray-100">
-            <h1 class="text-center text-3xl font-semibold text-gray-800">Rekapitulasi Pendaftar - Desa Banguntapan 1</h1>
+            <h1 class="text-center text-3xl font-semibold text-gray-800">Rekapitulasi Pendaftar <br> Desa Banguntapan 1</h1>
 
             <div class="py-3 flex flex-wrap justify-center gap-3">
                 <!-- Tombol Download ZIP QR Code -->
