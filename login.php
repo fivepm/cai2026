@@ -7,7 +7,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Access Card - Event CAI 2026</title>
+    <title>Login - CAI 2026</title>
     <link rel="icon" type="image/png" href="assets/images/Logo 1x1.png">
 
     <!-- 1. Google Fonts -->
@@ -61,8 +61,8 @@ session_start();
         <!-- Header -->
         <div class="text-center mb-6">
             <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto mb-3 object-contain drop-shadow-sm">
-            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Login Access Card</h1>
-            <p class="text-sm text-slate-500 mt-1">Event CAI 2026</p>
+            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Login</h1>
+            <p class="text-sm text-slate-500 mt-1">CAI Banguntapan 1 - Tahun 2026</p>
         </div>
 
         <!-- Pesan Error / Notifikasi Session dari Server -->
@@ -81,7 +81,7 @@ session_start();
         <!-- Tampilan Pilihan Metode Scan -->
         <div id="selectionContainer" class="space-y-4">
             <div class="text-center mb-4">
-                <p class="text-sm font-medium text-slate-600">Pilih cara pemindaian QR Code Anda:</p>
+                <p class="text-sm font-medium text-slate-600">Pilih cara pemindaian Kartu Akses Anda:</p>
             </div>
 
             <!-- Tombol 1: Pindai dengan Kamera -->
