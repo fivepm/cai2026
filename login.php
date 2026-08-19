@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Event CAI 2026</title>
-    <link rel="icon" type="image/png" href="uploads/Logo 1x1.png">
+    <link rel="icon" type="image/png" href="assets/images/Logo 1x1.png">
 
     <!-- 1. Tailwind CSS untuk styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -46,7 +46,7 @@
 
         <!-- Kontainer untuk Form Login -->
         <div id="loginContainer">
-            <img src="uploads/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto">
+            <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto">
             <h2 class="text-3xl font-bold text-center text-gray-800">Selamat Datang</h2>
             <p class="text-center text-gray-500">Silakan masuk untuk melanjutkan</p>
 
