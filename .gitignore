@@ -2,3 +2,4 @@
 credentials/
 vendor/
 uploads/
+deploy.php
