@@ -61,6 +61,7 @@ session_start();
         <!-- Header -->
         <div class="text-center mb-6">
             <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto mb-3 object-contain drop-shadow-sm">
+            <hr class="mb-3">
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Login</h1>
             <p class="text-sm text-slate-500 mt-1">CAI Banguntapan 1 - Tahun 2026</p>
         </div>

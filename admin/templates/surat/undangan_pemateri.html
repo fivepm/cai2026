@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 11pt;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            line-height: 1.3;
+        }
+
+        .page {
+            padding: 0;
+        }
+
+        /* KOP SURAT */
+        table.kop-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        table.kop-table td {
+            vertical-align: middle;
+            padding: 2px 4px;
+        }
+
+        td.kop-logo {
+            width: 105px;
+            text-align: center;
+        }
+
+        td.kop-logo img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+        }
+
+        td.kop-text {
+            text-align: center;
+            padding: 0 6px;
+        }
+
+        .kop-text .org-name {
+            font-size: 15pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .kop-text .panitia-name {
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .kop-text .address {
+            font-size: 7.5pt;
+            margin-top: 3px;
+        }
+
+        .kop-border {
+            border-bottom: 3px double #000;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+        }
+
+        /* INFO SURAT */
+        table.info {
+            width: 58%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+
+        table.info td {
+            padding: 1px 0;
+            font-size: 11pt;
+            vertical-align: top;
+        }
+
+        table.info td.label {
+            width: 32%;
+        }
+
+        table.info td.sep {
+            width: 5%;
+        }
+
+        table.info td.val {
+            width: 63%;
+        }
+
+        /* TANGGAL & TUJUAN */
+        .tanggal-block {
+            text-align: right;
+            margin-bottom: 4px;
+            font-size: 11pt;
+        }
+
+        .tujuan-block {
+            margin-bottom: 8px;
+            font-size: 11pt;
+        }
+
+        /* BODY */
+        .body-surat {
+            text-align: justify;
+            line-height: 1.35;
+            margin-bottom: 6px;
+        }
+
+        table.acara {
+            width: 80%;
+            margin: 3px 0 6px 16px;
+            border-collapse: collapse;
+        }
+
+        table.acara td {
+            padding: 1px 0;
+            vertical-align: top;
+            font-size: 11pt;
+        }
+
+        table.acara td.label {
+            width: 28%;
+        }
+
+        table.acara td.sep {
+            width: 5%;
+        }
+
+        table.acara td.val {
+            width: 67%;
+        }
+
+        table.rincian {
+            width: 80%;
+            margin: 3px 0 6px 16px;
+            border-collapse: collapse;
+        }
+
+        table.rincian td {
+            padding: 1px 0;
+            vertical-align: top;
+            font-size: 11pt;
+        }
+
+        table.rincian td.label {
+            width: 28%;
+        }
+
+        table.rincian td.sep {
+            width: 5%;
+        }
+
+        table.rincian td.val {
+            width: 67%;
+        }
+
+        .penutup {
+            margin: 6px 0 8px 0;
+            text-align: justify;
+            line-height: 1.35;
+        }
+
+        /* TTD */
+        table.ttd {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table.ttd td {
+            vertical-align: top;
+            text-align: center;
+            font-size: 11pt;
+        }
+
+        .ttd-img {
+            height: 55px;
+            width: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- KOP SURAT dengan Logo -->
+        <div class="kop-border">
+            <table class="kop-table">
+                <tr>
+                    <td width="105" align="center">
+                        <img src="{{logo_cai}}" alt="Logo CAI" width="75" height="75">
+                    </td>
+                    <td align="center" style="padding: 0 6px;">
+                        <div
+                            style="font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+                            KMM Banguntapan 1</div>
+                        <div style="font-size: 18pt; font-weight: bold; text-transform: uppercase;">Panitia CAI XLVII
+                            2026</div>
+                        <div style="font-size: 7.5pt; margin-top: 3px;">Jl. Sunten No.82, Kec. Banguntapan, Kab. Bantul,
+                            DIY &nbsp;|&nbsp; Email: kmmbanguntapan354@gmail.com &nbsp;|&nbsp; Kode Pos: 55198</div>
+                    </td>
+                    <td width="105" align="center">
+                        <img src="{{logo_kmm}}" alt="Logo KMM" width="75" height="75">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- INFO SURAT -->
+        <table class="info">
+            <tr>
+                <td class="label">Nomor</td>
+                <td class="sep">:</td>
+                <td class="val">11/MHN/CAI/VIII/2026</td>
+            </tr>
+            <tr>
+                <td class="label">Lampiran</td>
+                <td class="sep">:</td>
+                <td class="val">-</td>
+            </tr>
+            <tr>
+                <td class="label">Hal</td>
+                <td class="sep">:</td>
+                <td class="val">Permohonan</td>
+            </tr>
+        </table>
+
+        <div class="tanggal-block">Bantul, {{tanggal_surat}}</div>
+
+        <div class="tujuan-block">
+            Kepada<br>
+            {{nama_pemateri}}<br>
+            di Tempat
+        </div>
+
+        <p class="body-surat" style="text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 5px;"
+            dir="rtl" lang="ar">السلام عليكم ورحمة الله وبركاته</p>
+        <p class="body-surat">Dengan hormat,</p>
+
+        <p class="body-surat">
+            Sehubungan dengan telah dilaksanakannya PERMATA CAI XLVII oleh Pusat, maka KMM Banguntapan 1 akan mengadakan
+            Camping CAI XLVII Tahun 2026 untuk seluruh Muda/i Desa Banguntapan 1 yang akan dilaksanakan pada :
+        </p>
+
+        <table class="acara">
+            <tr>
+                <td class="label">Hari/tanggal</td>
+                <td class="sep">:</td>
+                <td class="val">Jum'at - Minggu, 4 - 6 September 2026</td>
+            </tr>
+            <tr>
+                <td class="label">Tempat</td>
+                <td class="sep">:</td>
+                <td class="val">LPP Kaliurang</td>
+            </tr>
+            <tr>
+                <td class="label">Acara</td>
+                <td class="sep">:</td>
+                <td class="val">Camping CAI XLVII Tahun 2026</td>
+            </tr>
+            <tr>
+                <td class="label">Peserta</td>
+                <td class="sep">:</td>
+                <td class="val">Seluruh Muda/i Desa Banguntapan 1</td>
+            </tr>
+        </table>
+
+        <p class="body-surat">Untuk itu, kami mengajukan permohonan kepada {{nama_pemateri}} sebagai Pemateri pada CAI
+            XLVII Banguntapan 1 dengan rincian :</p>
+
+        <table class="rincian">
+            <tr>
+                <td class="label">Materi</td>
+                <td class="sep">:</td>
+                <td class="val">{{jenis_undangan}}</td>
+            </tr>
+            <tr>
+                <td class="label">Judul / Tema</td>
+                <td class="sep">:</td>
+                <td class="val">{{topik_materi}}</td>
+            </tr>
+            <tr>
+                <td class="label">Tanggal</td>
+                <td class="sep">:</td>
+                <td class="val">{{tanggal_acara}}</td>
+            </tr>
+            <tr>
+                <td class="label">Waktu</td>
+                <td class="sep">:</td>
+                <td class="val">{{waktu_acara}}</td>
+            </tr>
+        </table>
+
+        <p class="penutup">Apabila terdapat kendala waktu dapat menghubungi nomor 087848248295 (WhatsApp a.n. Sdr.
+            Panca). Demikian surat permohonan ini kami sampaikan, atas ketersediaan waktunya kami ucapkan syukur.</p>
+
+        <p class="penutup"
+            style="text-align: center; font-size: 13pt; font-weight: bold; margin-top: 5px; margin-bottom: 2px;"
+            dir="rtl" lang="ar">الحمدلله جزاكم الله خيرا</p>
+        <p class="penutup" style="text-align: center; font-size: 13pt; font-weight: bold; margin-bottom: 10px;"
+            dir="rtl" lang="ar">والسلام عليكم ورحمة الله وبركاته</p>
+
+        <!-- TTD KETUA -->
+        <table class="ttd">
+            <tr>
+                <td style="width:60%"></td>
+                <td style="width:40%">Ketua Panitia,</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align:center; padding-top:4px;">
+                    <img src="{{ttd_ketua}}" alt="TTD Ketua" height="80">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td style="text-align:center;">(Panca Aulia Rahman)</td>
+            </tr>
+        </table>
+
+    </div>
+</body>
+
+</html>

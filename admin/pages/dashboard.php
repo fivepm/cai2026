@@ -14,7 +14,6 @@ foreach ($kelompok_list as $kelompok) {
     ];
 }
 $grand_total_pendaftar = ['hadir' => 0, 'izin' => 0, 'total' => 0];
-$data_mumi = ['Bintaran' => 23, 'Gedongkuning' => 29, 'Jombor' => 10, 'Sunten' => 46];
 
 // Ambil data peserta hadir
 $result_hadir = $conn->query("SELECT kelompok, jenis_kelamin, COUNT(id) as jumlah FROM peserta GROUP BY kelompok, jenis_kelamin");
@@ -42,26 +41,6 @@ if ($result_izin) {
     }
 }
 $grand_total_pendaftar['total'] = $grand_total_pendaftar['hadir'] + $grand_total_pendaftar['izin'];
-
-
-// =======================================================
-// 2. MENGHITUNG STATISTIK KEUANGAN
-// =======================================================
-$result_masuk = $conn->query("SELECT SUM(jumlah) as total FROM log_keuangan WHERE jenis = 'masuk'");
-$total_masuk = $result_masuk->fetch_assoc()['total'] ?? 0;
-
-$result_keluar = $conn->query("SELECT SUM(jumlah) as total FROM log_keuangan WHERE jenis = 'keluar'");
-$total_keluar = $result_keluar->fetch_assoc()['total'] ?? 0;
-
-$saldo_sekarang = $total_masuk - $total_keluar;
-
-
-// =======================================================
-// 3. MENGAMBIL DETAIL ARUS KAS (CASHFLOW)
-// =======================================================
-$pemasukan_by_sumber = $conn->query("SELECT sumber_pemasukan, SUM(jumlah) as total FROM log_keuangan WHERE jenis = 'masuk' AND sumber_pemasukan IS NOT NULL GROUP BY sumber_pemasukan")->fetch_all(MYSQLI_ASSOC);
-$pengeluaran_by_divisi = $conn->query("SELECT divisi_pengeluaran, SUM(jumlah) as total FROM log_keuangan WHERE jenis = 'keluar' AND divisi_pengeluaran IS NOT NULL GROUP BY divisi_pengeluaran")->fetch_all(MYSQLI_ASSOC);
-
 ?>
 
 <!-- Mulai HTML Konten -->
@@ -74,10 +53,10 @@ $pengeluaran_by_divisi = $conn->query("SELECT divisi_pengeluaran, SUM(jumlah) as
     <!-- Bagian Ringkasan Pendaftar -->
     <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-bold text-gray-800 mb-4">Ringkasan Pendaftar</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div class="bg-red-100 p-4 rounded-lg">
-                <p class="text-sm text-red-700 font-semibold">Total Pendaftar</p>
-                <p class="text-3xl font-bold text-red-900"><?php echo $grand_total_pendaftar['total']; ?></p>
+        <div class="hidden md:grid md:grid-cols-3 gap-4 text-center">
+            <div class="bg-blue-100 p-4 rounded-lg">
+                <p class="text-sm text-blue-700 font-semibold">Total Pendaftar</p>
+                <p class="text-3xl font-bold text-blue-900"><?php echo $grand_total_pendaftar['total']; ?></p>
             </div>
             <div class="bg-green-100 p-4 rounded-lg">
                 <p class="text-sm text-green-700 font-semibold">Peserta Hadir</p>
@@ -88,91 +67,112 @@ $pengeluaran_by_divisi = $conn->query("SELECT divisi_pengeluaran, SUM(jumlah) as
                 <p class="text-3xl font-bold text-yellow-900"><?php echo $grand_total_pendaftar['izin']; ?></p>
             </div>
         </div>
-        <div class="mt-4 overflow-x-auto">
-            <table class="w-full text-sm  divide-y">
-                <thead class="bg-gray-100">
-                    <tr class="font-semibold">
-                        <td class="p-3 font-bold">Kelompok</td>
-                        <td class="p-3 text-center font-bold">Data Muda/i</td>
-                        <td class="p-3 text-center font-bold" colspan="2">Konfirmasi<br>Hadir</td>
-                        <td class="p-3 text-center font-bold" colspan="2">Konfirmasi<br>Izin</td>
-                        <td class="p-3 text-center font-bold">Total Pendaftar</td>
-                        <td class="p-3 text-center font-bold">Persentase Pendaftar</td>
-                        <td class="p-3 text-center font-bold bg-red-500">Yang Belum Mendaftar</td>
-                    </tr>
-                    <tr class="bg-gray-50 text-xs text-gray-600">
-                        <td class="p-2"></td>
-                        <td class="p-2"></td>
-                        <td class="p-2 text-center">L</td>
-                        <td class="p-2 text-center">P</td>
-                        <td class="p-2 text-center">L</td>
-                        <td class="p-2 text-center">P</td>
-                        <td class="p-2"></td>
-                        <td class="p-2"></td>
-                        <td class="p-2 bg-red-500"></td>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    <?php foreach ($stats_pendaftar as $kelompok => $data): ?>
+        <!-- Tampilan Desktop (Tabel) -->
+        <div class="hidden md:block mt-6 overflow-hidden bg-white shadow ring-1 ring-gray-200 rounded-xl">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <td class="p-3 font-semibold"><?php echo $kelompok; ?></td>
-                            <td class="p-3 text-center font-bold"><?php echo $data_mumi[$kelompok]; ?></td>
-                            <td class="p-3 text-center"><?php echo $data['hadir']['Laki-laki']; ?></td>
-                            <td class="p-3 text-center"><?php echo $data['hadir']['Perempuan']; ?></td>
-                            <td class="p-3 text-center"><?php echo $data['izin']['Laki-laki']; ?></td>
-                            <td class="p-3 text-center"><?php echo $data['izin']['Perempuan']; ?></td>
-                            <td class="p-3 text-center font-bold"><?php echo $data['total_kelompok']; ?></td>
-                            <td class="p-3 text-center font-bold"><?php echo number_format(($data['total_kelompok'] / $data_mumi[$kelompok]) * 100, 2); ?> %</td>
-                            <td class="p-3 text-center font-bold bg-red-500"><?php echo $data_mumi[$kelompok] - $data['total_kelompok']; ?></td>
+                            <th rowspan="2" class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-200 bg-gray-50">Kelompok</th>
+                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-green-800 uppercase tracking-wider border-b border-gray-200 bg-green-50">Konfirmasi Hadir</th>
+                            <th colspan="3" class="px-6 py-3 text-center text-sm font-bold text-yellow-800 uppercase tracking-wider border-b border-gray-200 bg-yellow-50">Konfirmasi Izin</th>
+                            <th rowspan="2" class="px-6 py-4 text-center text-sm font-bold text-blue-800 uppercase tracking-wider border-b border-gray-200 bg-blue-50">Total Pendaftar</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                        <tr>
+                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 bg-green-50 border-b border-gray-200">L</th>
+                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 bg-green-50 border-b border-gray-200">P</th>
+                            <th class="px-4 py-2 text-center text-xs font-bold text-green-700 bg-green-100 border-b border-gray-200">Total</th>
+                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 bg-yellow-50 border-b border-gray-200">L</th>
+                            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-600 bg-yellow-50 border-b border-gray-200">P</th>
+                            <th class="px-4 py-2 text-center text-xs font-bold text-yellow-700 bg-yellow-100 border-b border-gray-200">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <?php foreach ($stats_pendaftar as $kelompok => $data): ?>
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800"><?php echo $kelompok; ?></td>
+                                
+                                <!-- Hadir -->
+                                <td class="px-4 py-4 text-center text-sm text-gray-600"><?php echo $data['hadir']['Laki-laki']; ?></td>
+                                <td class="px-4 py-4 text-center text-sm text-gray-600"><?php echo $data['hadir']['Perempuan']; ?></td>
+                                <td class="px-4 py-4 text-center text-sm font-bold text-green-700 bg-green-50/50"><?php echo $data['hadir']['total']; ?></td>
+                                
+                                <!-- Izin -->
+                                <td class="px-4 py-4 text-center text-sm text-gray-600"><?php echo $data['izin']['Laki-laki']; ?></td>
+                                <td class="px-4 py-4 text-center text-sm text-gray-600"><?php echo $data['izin']['Perempuan']; ?></td>
+                                <td class="px-4 py-4 text-center text-sm font-bold text-yellow-700 bg-yellow-50/50"><?php echo $data['izin']['total']; ?></td>
+                                
+                                <!-- Total Kelompok -->
+                                <td class="px-6 py-4 text-center text-base font-bold text-blue-700 bg-blue-50/50"><?php echo $data['total_kelompok']; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        
+                        <!-- Grand Total Row -->
+                        <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 uppercase">Total Keseluruhan</td>
+                            <td colspan="3" class="px-6 py-4 text-center text-base text-green-800 bg-green-100"><?php echo $grand_total_pendaftar['hadir']; ?></td>
+                            <td colspan="3" class="px-6 py-4 text-center text-base text-yellow-800 bg-yellow-100"><?php echo $grand_total_pendaftar['izin']; ?></td>
+                            <td class="px-6 py-4 text-center text-lg text-blue-900 bg-blue-200"><?php echo $grand_total_pendaftar['total']; ?></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- Bagian Ringkasan Keuangan -->
-    <div>
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Ringkasan Keuangan</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-green-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold">Total Uang Masuk</h3>
-                <p class="text-4xl font-bold mt-2">Rp <?php echo number_format($total_masuk, 0, ',', '.'); ?></p>
+        <!-- Tampilan Mobile (Cards) -->
+        <div class="block md:hidden mt-6 space-y-4">
+            <!-- Grand Total Card -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-md text-white p-5 relative overflow-hidden">
+                <i class="fas fa-chart-pie absolute -bottom-4 -right-4 text-blue-500 opacity-30 text-7xl"></i>
+                <h3 class="font-bold mb-3 border-b border-blue-400/50 pb-2 text-lg">Total Keseluruhan</h3>
+                <div class="relative z-10 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-blue-100 font-medium">Total Hadir</span>
+                        <span class="font-bold bg-white/20 px-2.5 py-0.5 rounded text-sm"><?php echo $grand_total_pendaftar['hadir']; ?></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-blue-100 font-medium">Total Izin</span>
+                        <span class="font-bold bg-white/20 px-2.5 py-0.5 rounded text-sm"><?php echo $grand_total_pendaftar['izin']; ?></span>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-blue-400/50 mt-3">
+                        <span class="text-sm font-semibold text-blue-50 uppercase tracking-wide">Grand Total</span>
+                        <span class="text-2xl font-bold text-yellow-300"><?php echo $grand_total_pendaftar['total']; ?></span>
+                    </div>
+                </div>
             </div>
-            <div class="bg-red-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold">Total Uang Keluar</h3>
-                <p class="text-4xl font-bold mt-2">Rp <?php echo number_format($total_keluar, 0, ',', '.'); ?></p>
-            </div>
-            <div class="bg-blue-500 text-white p-6 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold">Saldo Sekarang</h3>
-                <p class="text-4xl font-bold mt-2">Rp <?php echo number_format($saldo_sekarang, 0, ',', '.'); ?></p>
-            </div>
-        </div>
-    </div>
 
-    <!-- Bagian Detail Arus Kas -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Detail Pemasukan</h3>
-            <ul class="space-y-3">
-                <?php foreach ($pemasukan_by_sumber as $sumber): ?>
-                    <li class="flex justify-between items-center text-gray-700">
-                        <span><i class="fas fa-circle text-green-500 mr-2 text-xs"></i><?php echo ucfirst($sumber['sumber_pemasukan']); ?></span>
-                        <span class="font-semibold">Rp <?php echo number_format($sumber['total'], 0, ',', '.'); ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Detail Pengeluaran</h3>
-            <ul class="space-y-3">
-                <?php foreach ($pengeluaran_by_divisi as $divisi): ?>
-                    <li class="flex justify-between items-center text-gray-700">
-                        <span><i class="fas fa-circle text-red-500 mr-2 text-xs"></i><?php echo ucfirst($divisi['divisi_pengeluaran']); ?></span>
-                        <span class="font-semibold">Rp <?php echo number_format($divisi['total'], 0, ',', '.'); ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <?php foreach ($stats_pendaftar as $kelompok => $data): ?>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 text-lg"><?php echo $kelompok; ?></h3>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-200">Total: <?php echo $data['total_kelompok']; ?></span>
+                </div>
+                <div class="p-4 space-y-3">
+                    <!-- Section Hadir -->
+                    <div class="bg-green-50/70 rounded-lg p-3 border border-green-100">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-green-200">
+                            <span class="text-sm font-bold text-green-800"><i class="fas fa-check-circle mr-1"></i> Hadir</span>
+                            <span class="text-sm font-bold text-green-700 bg-green-200 px-2 py-0.5 rounded-md"><?php echo $data['hadir']['total']; ?></span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-600 font-medium px-1">
+                            <span>Laki-laki: <span class="text-gray-900 font-bold"><?php echo $data['hadir']['Laki-laki']; ?></span></span>
+                            <span>Perempuan: <span class="text-gray-900 font-bold"><?php echo $data['hadir']['Perempuan']; ?></span></span>
+                        </div>
+                    </div>
+                    <!-- Section Izin -->
+                    <div class="bg-yellow-50/70 rounded-lg p-3 border border-yellow-100">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-yellow-200">
+                            <span class="text-sm font-bold text-yellow-800"><i class="fas fa-envelope-open-text mr-1"></i> Izin</span>
+                            <span class="text-sm font-bold text-yellow-700 bg-yellow-200 px-2 py-0.5 rounded-md"><?php echo $data['izin']['total']; ?></span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-600 font-medium px-1">
+                            <span>Laki-laki: <span class="text-gray-900 font-bold"><?php echo $data['izin']['Laki-laki']; ?></span></span>
+                            <span>Perempuan: <span class="text-gray-900 font-bold"><?php echo $data['izin']['Perempuan']; ?></span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </div>

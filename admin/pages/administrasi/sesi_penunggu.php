@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $stmt->bind_param("sss", $nama_sesi, $waktu_sesi, $tanggal_sesi);
         $stmt->execute();
         $stmt->close();
+        $_SESSION['success_msg'] = 'Sesi penunggu berhasil ditambahkan!';
     } elseif ($action === 'update') {
         $sesi_id = $_POST['sesi_id'];
         $nama_sesi = $_POST['nama_sesi'];
@@ -29,12 +30,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $stmt->bind_param("sssisi", $nama_sesi, $waktu_sesi, $tanggal_sesi, $jumlah_penunggu, $nama_penunggu_json, $sesi_id);
         $stmt->execute();
         $stmt->close();
+        $_SESSION['success_msg'] = 'Sesi penunggu berhasil diupdate!';
     } elseif ($action === 'hapus') {
         $sesi_id = $_POST['sesi_id'];
         $stmt = $conn->prepare("DELETE FROM sesi_penunggu WHERE id = ?");
         $stmt->bind_param("i", $sesi_id);
         $stmt->execute();
         $stmt->close();
+        $_SESSION['success_msg'] = 'Sesi penunggu berhasil dihapus!';
     }
 
     header("Location: admin.php?page=administrasi/sesi_penunggu");
@@ -46,16 +49,40 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
 ?>
 
 <!-- Mulai HTML Konten -->
+<style>
+.form-input {
+    display: block; width: 100%;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.25rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    box-sizing: border-box;
+}
+.form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 2px; }
+</style>
+
 <div x-data="{ isAddModalOpen: false, isDeleteModalOpen: false, deleteSesiId: null, deleteSesiNama: '', isViewModalOpen: false, viewSesiData: {} }">
+    <!-- Header -->
     <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-semibold text-gray-800">Daftar Sesi Penunggu</h1>
-        <button @click="isAddModalOpen = true" class="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 flex items-center">
-            <i class="fas fa-plus mr-2"></i>Tambah Sesi Baru
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Daftar Sesi Penunggu</h1>
+            <p class="text-sm text-gray-500 mt-0.5">Kelola jadwal dan nama penunggu CAI</p>
+        </div>
+        <button @click="isAddModalOpen = true" class="px-5 py-2.5 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 flex items-center gap-2 shadow-md transition-all">
+            <i class="fas fa-plus text-sm"></i> Tambah Sesi Baru
         </button>
     </div>
 
     <!-- Grid untuk menampilkan kartu sesi -->
-    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <?php foreach ($sesi_list as $sesi): ?>
             <?php
             $penunggu_array = json_decode($sesi['nama_penunggu'] ?? '[]', true);
@@ -66,99 +93,162 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
                     jumlah: <?php echo $sesi['jumlah_penunggu']; ?>,
                     penunggu: <?php echo json_encode($penunggu_array); ?>
                 }'
-                class="bg-white p-6 rounded-xl shadow-md">
-
-                <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="space-y-4">
-                    <input type="hidden" name="action" value="update">
-                    <input type="hidden" name="sesi_id" value="<?php echo $sesi['id']; ?>">
-
-                    <div class="flex justify-between items-start">
-                        <div class="flex-grow">
-                            <label class="block text-xs font-medium text-gray-500">Nama Sesi</label>
-                            <input type="text" name="nama_sesi" value="<?php echo htmlspecialchars($sesi['nama_sesi']); ?>" class="text-xl font-bold text-gray-800 border-0 border-b-2 border-transparent focus:border-red-500 focus:ring-0 p-0 w-full">
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <button type="button" @click="isViewModalOpen = true; viewSesiData = { nama: '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>', tanggal: '<?php echo $tanggal_formatted; ?>', waktu: '<?php echo htmlspecialchars($sesi['waktu_sesi'], ENT_QUOTES); ?>', penunggu: penunggu };" class="text-gray-400 hover:text-blue-600"><i class="fas fa-eye"></i></button>
-                            <button type="button" @click="isDeleteModalOpen = true; deleteSesiId = <?php echo $sesi['id']; ?>; deleteSesiNama = '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>';" class="text-gray-400 hover:text-red-600"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+                
+                <div class="bg-blue-50 px-5 py-3 border-b border-blue-100 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clock text-blue-600"></i>
+                        <span class="font-semibold text-blue-800 text-sm">Jadwal Penunggu</span>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="isViewModalOpen = true; viewSesiData = { nama: '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>', tanggal: '<?php echo $tanggal_formatted; ?>', waktu: '<?php echo htmlspecialchars($sesi['waktu_sesi'], ENT_QUOTES); ?>', penunggu: penunggu };" class="text-blue-500 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-md transition-colors" title="Lihat Jadwal"><i class="fas fa-eye text-sm"></i></button>
+                        <button type="button" @click="isDeleteModalOpen = true; deleteSesiId = <?php echo $sesi['id']; ?>; deleteSesiNama = '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>';" class="text-red-500 hover:text-red-700 bg-red-100 hover:bg-red-200 p-1.5 rounded-md transition-colors" title="Hapus Jadwal"><i class="fas fa-trash-alt text-sm"></i></button>
+                    </div>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-5">
+                    <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="space-y-4">
+                        <input type="hidden" name="action" value="update">
+                        <input type="hidden" name="sesi_id" value="<?php echo $sesi['id']; ?>">
+
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Tanggal Sesi</label>
-                            <input type="date" name="tanggal_sesi" value="<?php echo htmlspecialchars($sesi['tanggal_sesi']); ?>" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                            <input type="text" name="nama_sesi" value="<?php echo htmlspecialchars($sesi['nama_sesi']); ?>" class="text-xl font-bold text-gray-800 border-0 border-b-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-0 pb-1 w-full transition-colors" placeholder="Nama Sesi...">
                         </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label"><i class="fas fa-calendar-day mr-1 text-blue-500"></i>Tanggal</label>
+                                <input type="date" name="tanggal_sesi" value="<?php echo htmlspecialchars($sesi['tanggal_sesi']); ?>" class="form-input text-xs">
+                            </div>
+                            <div>
+                                <label class="form-label"><i class="fas fa-hourglass-half mr-1 text-blue-500"></i>Waktu</label>
+                                <input type="text" name="waktu_sesi" value="<?php echo htmlspecialchars($sesi['waktu_sesi']); ?>" placeholder="08:00 - 09:00" class="form-input text-xs">
+                            </div>
+                        </div>
+
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Waktu Sesi</label>
-                            <input type="text" name="waktu_sesi" value="<?php echo htmlspecialchars($sesi['waktu_sesi']); ?>" placeholder="cth: 08:00 - 09:00" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
+                            <label class="form-label"><i class="fas fa-users mr-1 text-blue-500"></i>Jumlah Penunggu</label>
+                            <input type="number" name="jumlah_penunggu" x-model.number="jumlah" min="0" max="10" class="form-input">
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Jumlah Penunggu</label>
-                        <input type="number" name="jumlah_penunggu" x-model.number="jumlah" min="0" max="10" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
-                    </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Nama Penunggu</label>
-                        <template x-for="i in Array.from({ length: jumlah }, (_, i) => i)">
-                            <input type="text" name="nama_penunggu[]" x-model="penunggu[i]" :placeholder="'Penunggu ' + (i + 1)" class="mt-1 w-full border-gray-300 rounded-md shadow-sm">
-                        </template>
-                    </div>
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-2 max-h-48 overflow-y-auto">
+                            <label class="block text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">Nama Penunggu</label>
+                            <template x-for="i in Array.from({ length: jumlah }, (_, i) => i)">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-gray-400 w-4 text-right" x-text="i + 1"></span>
+                                    <input type="text" name="nama_penunggu[]" x-model="penunggu[i]" :placeholder="'Nama penunggu ' + (i + 1)" class="form-input !mt-0">
+                                </div>
+                            </template>
+                        </div>
 
-                    <div class="pt-2 text-right">
-                        <button type="submit" class="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700">Simpan</button>
-                    </div>
-                </form>
+                        <div class="pt-2">
+                            <button type="submit" class="w-full py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors flex items-center justify-center gap-2"><i class="fas fa-save"></i> Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         <?php endforeach; ?>
+        <?php if (empty($sesi_list)): ?>
+            <div class="col-span-full py-12 text-center bg-white rounded-xl shadow-sm border border-gray-100 text-gray-400">
+                <i class="fas fa-calendar-times text-4xl mb-3 block text-gray-300"></i>
+                <p>Belum ada sesi penunggu yang dibuat.</p>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Modal Tambah Sesi -->
-    <div x-show="isAddModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isAddModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 class="text-2xl font-bold mb-4">Tambah Sesi Baru</h3>
-            <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="space-y-4">
-                <input type="hidden" name="action" value="tambah">
-                <div><label for="nama_sesi" class="block text-sm font-medium">Nama Sesi</label><input type="text" id="nama_sesi" name="nama_sesi" required class="mt-1 w-full border-gray-300 rounded-md shadow-sm"></div>
-                <div><label for="tanggal_sesi" class="block text-sm font-medium">Tanggal Sesi</label><input type="date" id="tanggal_sesi" name="tanggal_sesi" class="mt-1 w-full border-gray-300 rounded-md shadow-sm"></div>
-                <div><label for="waktu_sesi" class="block text-sm font-medium">Waktu Sesi</label><input type="text" id="waktu_sesi" name="waktu_sesi" placeholder="cth: 08:00 - 09:00" class="mt-1 w-full border-gray-300 rounded-md shadow-sm"></div>
-                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isAddModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Tambah</button></div>
-            </form>
+    <div x-show="isAddModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak x-transition>
+        <div @click.away="isAddModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-2"><i class="fas fa-calendar-plus text-white"></i></div>
+                    <h3 class="text-lg font-bold text-white">Tambah Sesi Baru</h3>
+                </div>
+                <button @click="isAddModalOpen = false" class="text-white hover:text-blue-200 text-xl leading-none">&times;</button>
+            </div>
+            
+            <div class="p-6">
+                <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="space-y-4">
+                    <input type="hidden" name="action" value="tambah">
+                    
+                    <div>
+                        <label for="nama_sesi" class="form-label">Nama Sesi</label>
+                        <input type="text" id="nama_sesi" name="nama_sesi" required class="form-input" placeholder="Misal: Penunggu Sesi 1">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="tanggal_sesi" class="form-label">Tanggal</label>
+                            <input type="date" id="tanggal_sesi" name="tanggal_sesi" class="form-input">
+                        </div>
+                        <div>
+                            <label for="waktu_sesi" class="form-label">Waktu</label>
+                            <input type="text" id="waktu_sesi" name="waktu_sesi" placeholder="cth: 08:00 - 09:00" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="button" @click="isAddModalOpen = false" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button>
+                        <button type="submit" class="px-5 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 shadow transition-colors"><i class="fas fa-check"></i> Tambah</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Modal Konfirmasi Hapus -->
-    <div x-show="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isDeleteModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
-            <h3 class="text-xl font-bold">Konfirmasi Hapus</h3>
-            <p class="mt-2">Yakin ingin menghapus sesi <strong x-text="deleteSesiNama"></strong>?</p>
-            <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="mt-6 flex justify-end space-x-4">
-                <input type="hidden" name="action" value="hapus">
-                <input type="hidden" name="sesi_id" :value="deleteSesiId">
-                <button type="button" @click="isDeleteModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Ya, Hapus</button>
-            </form>
+    <div x-show="isDeleteModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" x-cloak x-transition>
+        <div @click.away="isDeleteModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div class="bg-red-600 px-6 py-4 flex items-center gap-3">
+                <div class="bg-white bg-opacity-20 rounded-full p-2"><i class="fas fa-exclamation-triangle text-white text-sm"></i></div>
+                <h3 class="text-lg font-bold text-white">Konfirmasi Hapus</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-600">Yakin ingin menghapus sesi <strong class="text-gray-800" x-text="deleteSesiNama"></strong>?</p>
+                <form method="POST" action="admin.php?page=administrasi/sesi_penunggu" class="mt-5 flex justify-end gap-3">
+                    <input type="hidden" name="action" value="hapus">
+                    <input type="hidden" name="sesi_id" :value="deleteSesiId">
+                    <button type="button" @click="isDeleteModalOpen = false" class="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg">Ya, Hapus</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <!-- Modal Tampilan Sesi -->
-    <div x-show="isViewModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isViewModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
-            <img src="../uploads/bg_invoice.png" alt="Logo Acara" class="mx-auto h-10 w-auto">
-            <h3 class="text-2xl font-bold text-center text-gray-800">JADWAL PENUNGGU CAI</h3>
-            <h3 class="text-2xl font-bold text-center text-gray-800" x-text="viewSesiData.nama"></h3>
-            <p class="text-center text-gray-500" x-text="'Tanggal : ' + viewSesiData.tanggal"></p>
-            <p class="text-center text-gray-500" x-text="'Waktu : ' + viewSesiData.waktu"></p>
-            <div class="mt-6 border-t pt-4">
-                <h4 class="font-semibold text-lg text-center mb-2">Daftar Penunggu</h4>
-                <ul class="list-decimal list-inside text-center space-y-1">
-                    <template x-for="penunggu in viewSesiData.penunggu">
-                        <li x-text="penunggu || '- Kosong -'"></li>
+    <div x-show="isViewModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" x-cloak x-transition>
+        <div @click.away="isViewModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4 relative overflow-hidden">
+            <!-- Dekorasi Biru Background -->
+            <div class="absolute top-0 left-0 w-full h-32 bg-blue-50 -z-10"></div>
+            
+            <button @click="isViewModalOpen = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            
+            <img src="../assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-16 w-auto drop-shadow-md">
+            
+            <div class="text-center mt-4 mb-6">
+                <h3 class="text-xl font-black text-blue-900 tracking-wide">JADWAL PENUNGGU CAI</h3>
+                <h4 class="text-lg font-bold text-gray-800 mt-1" x-text="viewSesiData.nama"></h4>
+                <div class="inline-flex items-center gap-3 mt-3 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100 text-sm">
+                    <span class="text-gray-600"><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> <span x-text="viewSesiData.tanggal"></span></span>
+                    <span class="text-gray-300">|</span>
+                    <span class="text-gray-600"><i class="fas fa-clock text-blue-500 mr-1"></i> <span x-text="viewSesiData.waktu"></span></span>
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <h4 class="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-3 text-center border-b pb-2">Daftar Penunggu</h4>
+                <ul class="space-y-2">
+                    <template x-for="(penunggu, index) in viewSesiData.penunggu">
+                        <li class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3" x-text="index + 1"></div>
+                            <span class="font-medium text-gray-800" x-text="penunggu || '- Kosong -'"></span>
+                        </li>
                     </template>
                 </ul>
             </div>
-            <div class="mt-6 flex justify-end">
-                <button type="button" @click="isViewModalOpen = false" class="px-4 py-2 bg-red-600 text-white rounded-md">Tutup</button>
+            
+            <div class="mt-8 flex justify-center">
+                <button type="button" @click="isViewModalOpen = false" class="px-8 py-2.5 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-colors">Tutup</button>
             </div>
         </div>
     </div>

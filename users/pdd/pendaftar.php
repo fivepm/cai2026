@@ -88,36 +88,79 @@ $role_user = $_SESSION['user_role'];
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script>
+        function pendaftarData() {
+            return {
+                isQrCodeModalOpen: false, 
+                qrCodeValue: '', 
+                qrCodeName: '', 
+                isDownloading: false,
+
+                showQrCode(value, name) {
+                    this.isQrCodeModalOpen = true; 
+                    this.qrCodeValue = value; 
+                    this.qrCodeName = name;
+                    this.$nextTick(() => {
+                        const qrEl = document.getElementById('qrcode-display');
+                        qrEl.innerHTML = ''; 
+                        new QRCode(qrEl, { text: value, width: 200, height: 200 });
+                    });
+                },
+                downloadQrCode(value, filename) {
+                    const t = document.createElement('div'); 
+                    t.style.display = 'none'; 
+                    document.body.appendChild(t);
+                    new QRCode(t, { text: value, width: 256, height: 256 });
+                    setTimeout(() => {
+                        const i = t.querySelector('img');
+                        if (i) { 
+                            const l = document.createElement('a'); 
+                            l.href = i.src; 
+                            l.download = filename; 
+                            l.click(); 
+                        }
+                        document.body.removeChild(t);
+                    }, 100);
+                },
+                async downloadAllQrCodesZip() {
+                    this.isDownloading = true;
+                    try {
+                        const response = await fetch('download_qr_zip.php');
+                        if (!response.ok) throw new Error('Terjadi kesalahan pada server');
+                        
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        
+                        const disposition = response.headers.get('Content-Disposition');
+                        let filename = 'QRCode_Semua_Peserta.zip';
+                        if (disposition && disposition.indexOf('filename=') !== -1) {
+                            filename = disposition.split('filename=')[1].replace(/['"]/g, '');
+                        }
+                        
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                        alert('Gagal mengunduh file ZIP: ' + error.message);
+                    } finally {
+                        this.isDownloading = false;
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
 <body class="bg-gray-100 font-sans">
 
     <!-- Konten Utama -->
-    <div x-data="{ 
-        isQrCodeModalOpen: false, qrCodeValue: '', qrCodeName: '', 
-
-        showQrCode(value, name) {
-            this.isQrCodeModalOpen = true; this.qrCodeValue = value; this.qrCodeName = name;
-            this.$nextTick(() => {
-                const qrEl = document.getElementById('qrcode-display');
-                qrEl.innerHTML = ''; new QRCode(qrEl, { text: value, width: 200, height: 200 });
-            });
-        },
-        downloadQrCode(value, filename) {
-            const t = document.createElement('div'); t.style.display = 'none'; document.body.appendChild(t);
-            new QRCode(t, { text: value, width: 256, height: 256 });
-            setTimeout(() => {
-                const i = t.querySelector('img');
-                if (i) { const l = document.createElement('a'); l.href = i.src; l.download = filename; l.click(); }
-                document.body.removeChild(t);
-            }, 100);
-        },
-        downloadAllQrCodesZip() {
-            window.location.href = 'download_qr_zip.php';
-        }
-        }"
+    <div x-data="pendaftarData()"
         @keydown.escape.window="isQrCodeModalOpen=false"
-        class="flex-1 flex flex-col overflow-hidden">
+        class="flex-1 flex flex-col overflow-hidden relative">
         <header class="flex items-center justify-between px-6 py-4 bg-white border-b-4 border-blue-600">
             <img src="../../assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-10 w-auto">
             <h2 class="px-3 text-xl font-bold text-center text-gray-800">CAI Banguntapan 1 - Tahun 2026</h2>
@@ -263,6 +306,12 @@ $role_user = $_SESSION['user_role'];
                 </div>
                 <button type="button" @click="isQrCodeModalOpen = false" class="mt-6 w-full px-4 py-2 bg-red-600 text-white rounded-md">Tutup</button>
             </div>
+        </div>
+        
+        <!-- Loading Overlay untuk Download ZIP -->
+        <div x-show="isDownloading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-75" x-transition x-cloak style="display: none;">
+            <div class="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg font-semibold text-white tracking-wide">Mempersiapkan file ZIP... Mohon tunggu.</p>
         </div>
     </div>
     <?php $conn->close(); ?>

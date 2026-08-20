@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+    body {
+        font-family: 'Times New Roman', serif;
+        font-size: 12pt;
+        color: #000;
+        margin: 0;
+        padding: 0;
+    }
+    .page {
+        padding: 0;
+    }
+    h1.judul {
+        text-align: center;
+        font-size: 13pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-decoration: underline;
+        margin-bottom: 20px;
+    }
+    .intro {
+        margin-bottom: 12px;
+    }
+    table.biodata {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+    table.biodata td {
+        padding: 3px 0;
+        vertical-align: top;
+        font-size: 12pt;
+    }
+    table.biodata td.label {
+        width: 35%;
+    }
+    table.biodata td.sep {
+        width: 5%;
+    }
+    table.biodata td.val {
+        width: 60%;
+    }
+    .alasan-box {
+        margin: 10px 0 20px 0;
+        min-height: 40px;
+    }
+    .penutup {
+        margin-bottom: 30px;
+    }
+    .ttd-section {
+        width: 100%;
+    }
+    table.ttd {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    table.ttd td {
+        width: 50%;
+        vertical-align: top;
+        text-align: center;
+        padding: 0 10px;
+        font-size: 12pt;
+    }
+    .ttd-space {
+        height: 60px;
+    }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <h1 class="judul">Surat Permohonan Izin Pulang<br>Camping CAI XLVII 2026</h1>
+
+    <p class="intro">Yang bertanda tangan di bawah ini :</p>
+
+    <table class="biodata">
+        <tr>
+            <td class="label">Nama</td>
+            <td class="sep">:</td>
+            <td class="val">{{nama_peserta}}</td>
+        </tr>
+        <tr>
+            <td class="label">Kelompok</td>
+            <td class="sep">:</td>
+            <td class="val">{{kelompok}}</td>
+        </tr>
+        <tr>
+            <td class="label">Tanggal Pulang</td>
+            <td class="sep">:</td>
+            <td class="val">{{tanggal_pulang}}</td>
+        </tr>
+        <tr>
+            <td class="label">Pukul</td>
+            <td class="sep">:</td>
+            <td class="val">{{jam_pulang}} WIB</td>
+        </tr>
+    </table>
+
+    <p>dengan ini mengajukan permohonan izin untuk tidak dapat mengikuti acara seluruh agenda Camping CAI XLVII 2026 sehingga pulang duluan dengan alasan, yaitu :</p>
+
+    <div class="alasan-box">
+        <p>{{alasan}}</p>
+    </div>
+
+    <p class="penutup">Demikian surat ini saya sampaikan untuk memohon izin kepada Bapak Pembina atau Pengurus Desa.</p>
+
+    <p style="text-align:right; margin-right: 40px;">Bantul, {{tanggal}}</p>
+
+    <table class="ttd">
+        <tr>
+            <td>Menyaksikan,</td>
+            <td>Mengetahui,</td>
+        </tr>
+        <tr>
+            <td class="ttd-space"></td>
+            <td class="ttd-space"></td>
+        </tr>
+        <tr>
+            <td>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</td>
+            <td>( {{nama_peserta}} )</td>
+        </tr>
+    </table>
+
+</div>
+</body>
+</html>
