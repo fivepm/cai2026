@@ -95,6 +95,9 @@ $role_user = $_SESSION['user_role'];
                 qrCodeValue: '', 
                 qrCodeName: '', 
                 isDownloading: false,
+                isDownloadingKelompok: false,
+                isKelompokModalOpen: false,
+                selectedKelompok: '',
 
                 showQrCode(value, name) {
                     this.isQrCodeModalOpen = true; 
@@ -149,6 +152,44 @@ $role_user = $_SESSION['user_role'];
                     } finally {
                         this.isDownloading = false;
                     }
+                },
+                openKelompokModal() {
+                    this.selectedKelompok = '';
+                    this.isKelompokModalOpen = true;
+                },
+                async downloadQrZipByKelompok() {
+                    if (!this.selectedKelompok) {
+                        alert('Pilih kelompok terlebih dahulu.');
+                        return;
+                    }
+                    this.isKelompokModalOpen = false;
+                    this.isDownloadingKelompok = true;
+                    try {
+                        const url = 'download_qr_zip_kelompok.php?kelompok=' + encodeURIComponent(this.selectedKelompok);
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            const text = await response.text();
+                            throw new Error(text || 'Terjadi kesalahan pada server');
+                        }
+                        const blob = await response.blob();
+                        const objUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = objUrl;
+                        const disposition = response.headers.get('Content-Disposition');
+                        let filename = 'QRCode_Kelompok.zip';
+                        if (disposition && disposition.indexOf('filename=') !== -1) {
+                            filename = disposition.split('filename=')[1].replace(/['"]/g, '');
+                        }
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(objUrl);
+                    } catch (error) {
+                        alert('Gagal mengunduh file ZIP kelompok: ' + error.message);
+                    } finally {
+                        this.isDownloadingKelompok = false;
+                    }
                 }
             }
         }
@@ -174,11 +215,19 @@ $role_user = $_SESSION['user_role'];
             <h1 class="text-center text-3xl font-semibold text-gray-800">Rekapitulasi Pendaftar <br> Desa Banguntapan 1</h1>
 
             <div class="py-3 flex flex-wrap justify-center gap-3">
-                <!-- Tombol Download ZIP QR Code -->
+                <!-- Tombol Download ZIP QR Code Semua -->
                 <button @click="downloadAllQrCodesZip()"
-                        class="px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors">
+                        :disabled="isDownloading"
+                        class="px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                     <i class="fas fa-file-zipper"></i>
-                    Download Semua QR Code (.zip)
+                    <span x-text="isDownloading ? 'Mempersiapkan...' : 'Download Semua QR Code (.zip)'"></span>
+                </button>
+                <!-- Tombol Download ZIP QR Code per Kelompok -->
+                <button @click="openKelompokModal()"
+                        :disabled="isDownloadingKelompok"
+                        class="px-4 py-2 font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 flex items-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                    <i class="fas fa-people-group"></i>
+                    <span x-text="isDownloadingKelompok ? 'Mempersiapkan...' : 'Download QR per Kelompok (.zip)'"></span>
                 </button>
                 <!-- Tombol Export CSV -->
                 <a href="export_peserta" class="px-4 py-2 font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 flex items-center gap-2 transition-colors">
@@ -308,10 +357,53 @@ $role_user = $_SESSION['user_role'];
             </div>
         </div>
         
-        <!-- Loading Overlay untuk Download ZIP -->
+        <!-- Loading Overlay untuk Download ZIP Semua -->
         <div x-show="isDownloading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-75" x-transition x-cloak style="display: none;">
             <div class="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-lg font-semibold text-white tracking-wide">Mempersiapkan file ZIP... Mohon tunggu.</p>
+            <p class="text-lg font-semibold text-white tracking-wide">Mempersiapkan file ZIP semua peserta... Mohon tunggu.</p>
+        </div>
+
+        <!-- Loading Overlay untuk Download ZIP Kelompok -->
+        <div x-show="isDownloadingKelompok" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-75" x-transition x-cloak style="display: none;">
+            <div class="w-16 h-16 border-4 border-gray-300 border-t-purple-400 rounded-full animate-spin mb-4"></div>
+            <p class="text-lg font-semibold text-white tracking-wide">Mempersiapkan file ZIP kelompok... Mohon tunggu.</p>
+        </div>
+
+        <!-- Modal Pilih Kelompok -->
+        <div x-show="isKelompokModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
+            <div @click.away="isKelompokModalOpen = false" class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 mx-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-people-group text-purple-600"></i>
+                        Pilih Kelompok
+                    </h3>
+                    <button @click="isKelompokModalOpen = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Pilih kelompok yang ingin diunduh QR Code-nya dalam format ZIP.</p>
+                <select x-model="selectedKelompok"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-5">
+                    <option value="">-- Pilih Kelompok --</option>
+                    <?php
+                    $kelompok_list = array_unique(array_column($pendaftar_list, 'kelompok'));
+                    sort($kelompok_list);
+                    foreach ($kelompok_list as $kel): ?>
+                        <option value="<?php echo htmlspecialchars($kel); ?>"><?php echo htmlspecialchars($kel); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="flex gap-3">
+                    <button @click="isKelompokModalOpen = false"
+                            class="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                        Batal
+                    </button>
+                    <button @click="downloadQrZipByKelompok()"
+                            :disabled="!selectedKelompok"
+                            class="flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <?php $conn->close(); ?>
