@@ -41,6 +41,9 @@ try {
     $status_presensi = 'Hadir';
     date_default_timezone_set('Asia/Jakarta');
     $waktu_sekarang = new DateTime();
+    // Gunakan waktu PHP (Asia/Jakarta) agar tidak terpengaruh timezone UTC database
+    $waktu_presensi_str = $waktu_sekarang->format('Y-m-d H:i:s');
+
     $waktu_parts = explode('-', $sesi['waktu_sesi']);
     if (count($waktu_parts) === 2) {
         $waktu_selesai_str = trim($waktu_parts[1]);
@@ -51,8 +54,8 @@ try {
         }
     }
 
-    $stmt_update = $conn->prepare("UPDATE log_presensi SET status = ?, waktu_presensi = NOW() WHERE id_peserta = ? AND id_sesi = ? AND status = 'Belum Presensi'");
-    $stmt_update->bind_param("sii", $status_presensi, $peserta['id'], $sesi_id);
+    $stmt_update = $conn->prepare("UPDATE log_presensi SET status = ?, waktu_presensi = ? WHERE id_peserta = ? AND id_sesi = ? AND status = 'Belum Presensi'");
+    $stmt_update->bind_param("ssii", $status_presensi, $waktu_presensi_str, $peserta['id'], $sesi_id);
     $stmt_update->execute();
 
     if ($stmt_update->affected_rows > 0) {

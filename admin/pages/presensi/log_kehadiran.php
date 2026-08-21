@@ -6,8 +6,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     $status     = $_POST['status'];
     $keterangan = $_POST['keterangan'];
 
-    $stmt_update = $conn->prepare("UPDATE log_presensi SET status = ?, keterangan = ? WHERE id = ?");
-    $stmt_update->bind_param("ssi", $status, $keterangan, $log_id);
+    // Gunakan waktu PHP Asia/Jakarta agar tidak terpengaruh timezone UTC database
+    date_default_timezone_set('Asia/Jakarta');
+    $waktu_manual_str = date('Y-m-d H:i:s');
+
+    $stmt_update = $conn->prepare("UPDATE log_presensi SET status = ?, keterangan = ?, waktu_presensi = ? WHERE id = ?");
+    $stmt_update->bind_param("sssi", $status, $keterangan, $waktu_manual_str, $log_id);
     if ($stmt_update->execute()) {
         $_SESSION['message'] = ['type' => 'success', 'text' => 'Data kehadiran berhasil diperbarui.'];
     } else {
