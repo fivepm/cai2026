@@ -285,12 +285,12 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
                         <label for="topik_materi_select" class="form-label"><i class="fas fa-book-open mr-1 text-blue-500"></i>Pilih Judul Makalah</label>
                         <select id="topik_materi_select" name="topik_materi" :required="jenisUndanganPilihan === 'Makalah CAI'" class="form-input">
                             <option value="" disabled selected>-- Pilih Judul --</option>
-                            <option value="Meraih Sukses Pendidikan Generus (Dunia Akhirot)">Materi 1 : Meraih Sukses Pendidikan Generus (Dunia Akhirot)</option>
-                            <option value="Mewujudkan Pembiasaan 29 Karakter Luhur Jamaah Dimana Saja Berada">Materi 2 : Mewujudkan Pembiasaan 29 Karakter Luhur Jamaah Dimana Saja Berada</option>
-                            <option value="Peran Lima Unsur Dalam Menyukseskan Pembinaan Generasi Penerus">Materi 3 : Peran Lima Unsur Dalam Menyukseskan Pembinaan Generasi Penerus</option>
-                            <option value="Bijak Dalam Menghadapi Akhir Zaman">Materi 4 : Bijak Dalam Menghadapi Akhir Zaman</option>
-                            <option value="Memberdayakan Generus Untuk Kelestarian Qur'an Hadits Jamaah">Materi 5 : Memberdayakan Generus Untuk Kelestarian Qur'an Hadits Jamaah</option>
-                            <option value="Membangun Peradaban Hijau: Upaya LDII Dalam Pelestarian Lingkungan Dan Pencapaian Kedaulatan Pangan Untuk Mewujudkan Islam Rahmatan Lil Alamin">Materi Organisasi</option>
+                            <option value="Menjemput Pertolongan Allah dengan Menolong Agama Allah">Materi 1 : Menjemput Pertolongan Allah dengan Menolong Agama Allah</option>
+                            <option value="Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus">Materi 2 : Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus</option>
+                            <option value="Dampak Perbuatan Maksiat">Materi 3 : Dampak Perbuatan Maksiat</option>
+                            <option value="Mencetak Generus yang Sukses Dunia dan Akhirat">Materi 4 : Mencetak Generus yang Sukses Dunia dan Akhirat</option>
+                            <option value="Meningkatkan Semangat Juang Muballigh-Muballighot">Materi 5 : Meningkatkan Semangat Juang Muballigh-Muballighot</option>
+                            <option value="Wajibnya Menjaga Generus dari Kemaksiatan">Materi 6 : Wajibnya Menjaga Generus dari Kemaksiatan</option>
                         </select>
                     </div>
 
