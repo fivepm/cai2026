@@ -86,10 +86,11 @@ $stmt->close();
 
     <!-- Notifikasi -->
     <?php if (isset($_SESSION['message'])): ?>
-        <div class="mt-4 p-4 rounded-lg flex items-center gap-3 <?php echo $_SESSION['message']['type'] == 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'; ?>">
+        <div id="flash-notif" class="mt-4 p-4 rounded-lg flex items-center gap-3 <?php echo $_SESSION['message']['type'] == 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'; ?>" style="transition:opacity 0.5s ease;">
             <i class="fas <?php echo $_SESSION['message']['type'] == 'success' ? 'fa-circle-check text-green-500' : 'fa-circle-xmark text-red-500'; ?>"></i>
             <?php echo htmlspecialchars($_SESSION['message']['text']); ?>
         </div>
+        <script>setTimeout(()=>{const e=document.getElementById('flash-notif');if(e){e.style.opacity='0';setTimeout(()=>e.remove(),500);}},2000);</script>
         <?php unset($_SESSION['message']); ?>
     <?php endif; ?>
 

@@ -1,5 +1,5 @@
 <?php
-// (File: pages/presensi/scanner_kehadiran.php)
+// (File: sekretaris/pages/presensi/scanner_kehadiran.php)
 
 $sesi_list = [];
 $result_sesi_list = $conn->query("SELECT id, nama_sesi FROM sesi_presensi ORDER BY nama_sesi");
@@ -10,32 +10,51 @@ if ($result_sesi_list) {
 }
 ?>
 
+<style>
+@keyframes scanCardIn {
+    from { opacity: 0; transform: scale(0.75); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes drawStroke {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes pulseRing {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+.scan-result-card { animation: scanCardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-circle      { stroke-dasharray: 166; stroke-dashoffset: 166; animation: drawStroke 0.5s ease-out 0.05s forwards; }
+.anim-check       { stroke-dasharray: 55;  stroke-dashoffset: 55;  animation: drawStroke 0.35s ease-out 0.45s forwards; }
+.anim-cross1      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.4s  forwards; }
+.anim-cross2      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.58s forwards; }
+.pulse-ring       { animation: pulseRing 1s ease-out infinite; }
+</style>
+
 <script>
     function scannerKehadiranData() {
         return {
             sesiTerpilih: '',
             sesiAktif: false,
             namaSesiTerpilih: '',
-            scanResult: {
-                status: '',
-                message: ''
-            },
+            scanResult: { status: '', message: '', visible: false },
             html5QrCode: null,
+            _dismissTimer: null,
 
             mulaiSesi() {
                 if (!this.sesiTerpilih) return;
                 const selectedOption = document.querySelector(`#sesi_id option[value='${this.sesiTerpilih}']`);
                 this.namaSesiTerpilih = selectedOption.textContent;
                 this.sesiAktif = true;
-                this.scanResult = { status: '', message: '' };
+                this.scanResult = { status: '', message: '', visible: false };
                 this.$nextTick(() => { this.startScanner(); });
             },
 
             gantiSesi() {
+                if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
                 this.stopScanner();
                 this.sesiAktif = false;
                 this.sesiTerpilih = '';
-                this.scanResult = { status: '', message: '' };
+                this.scanResult = { status: '', message: '', visible: false };
             },
 
             startScanner() {
@@ -44,16 +63,10 @@ if ($result_sesi_list) {
                 this.html5QrCode.start(
                     { facingMode: "environment" },
                     config,
-                    (decodedText) => {
-                        this.html5QrCode.pause();
-                        this.handleScan(decodedText);
-                    },
+                    (decodedText) => { this.html5QrCode.pause(); this.handleScan(decodedText); },
                     () => {}
                 ).catch(() => {
-                    this.scanResult = {
-                        status: 'error',
-                        message: 'Gagal memulai kamera. Pastikan Anda memberikan izin dan menggunakan HTTPS.'
-                    };
+                    this.scanResult = { status: 'error', message: 'Gagal memulai kamera. Pastikan Anda memberikan izin dan menggunakan HTTPS.', visible: true };
                 });
             },
 
@@ -64,7 +77,8 @@ if ($result_sesi_list) {
             },
 
             handleScan(barcode) {
-                this.scanResult = { status: 'info', message: 'Memproses...' };
+                if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
+                this.scanResult = { status: 'info', message: 'Memproses...', visible: true };
 
                 fetch('pages/presensi/api_presensi.php', {
                     method: 'POST',
@@ -75,14 +89,18 @@ if ($result_sesi_list) {
                     if (!response.ok) return response.json().then(err => { throw new Error(err.message || 'Error tidak diketahui'); });
                     return response.json();
                 })
-                .then(data => { this.scanResult = data; })
+                .then(data => {
+                    this.scanResult = { ...data, visible: true };
+                })
                 .catch(error => {
-                    this.scanResult = { status: 'error', message: `Terjadi masalah. Error: ${error.message}` };
+                    this.scanResult = { status: 'error', message: `Terjadi masalah: ${error.message}`, visible: true };
                 })
                 .finally(() => {
-                    setTimeout(() => {
+                    this._dismissTimer = setTimeout(() => {
+                        this.scanResult.visible = false;
+                        this._dismissTimer = null;
                         if (this.html5QrCode && this.sesiAktif) this.html5QrCode.resume();
-                    }, 2000);
+                    }, 2500);
                 });
             }
         };
@@ -123,38 +141,38 @@ if ($result_sesi_list) {
             if (offset === 420) return 'WIB';
             if (offset === 480) return 'WITA';
             if (offset === 540) return 'WIT';
-            const h = Math.floor(Math.abs(offset) / 60), m = Math.abs(offset) % 60, sign = offset >= 0 ? '+' : '-';
-            return 'UTC' + sign + String(h).padStart(2,'0') + (m ? ':'+String(m).padStart(2,'0') : '');
+            const h=Math.floor(Math.abs(offset)/60), m=Math.abs(offset)%60, sign=offset>=0?'+':'-';
+            return 'UTC'+sign+String(h).padStart(2,'0')+(m?':'+String(m).padStart(2,'0'):'');
         }
         function drawAnalogClock(canvas, h, m, s) {
-            const ctx = canvas.getContext('2d'), cx = canvas.width/2, cy = canvas.height/2, r = cx-3;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.fill();
+            const ctx=canvas.getContext('2d'), cx=canvas.width/2, cy=canvas.height/2, r=cx-3;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.fill();
             ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
-            for (let i=0; i<12; i++) {
+            for(let i=0;i<12;i++){
                 const a=(i/12)*2*Math.PI-Math.PI/2;
-                ctx.beginPath(); ctx.arc(cx+Math.cos(a)*(r-5), cy+Math.sin(a)*(r-5), i%3===0?2:1, 0, 2*Math.PI);
+                ctx.beginPath(); ctx.arc(cx+Math.cos(a)*(r-5),cy+Math.sin(a)*(r-5),i%3===0?2:1,0,2*Math.PI);
                 ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fill();
             }
-            function drawHand(angle, length, width, color) {
+            function drawHand(angle,length,width,color){
                 ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
-                ctx.beginPath(); ctx.moveTo(0, length*0.2); ctx.lineTo(0, -length);
+                ctx.beginPath(); ctx.moveTo(0,length*0.2); ctx.lineTo(0,-length);
                 ctx.strokeStyle=color; ctx.lineWidth=width; ctx.lineCap='round'; ctx.stroke(); ctx.restore();
             }
             drawHand(((h%12)/12+m/720+s/43200)*2*Math.PI, r*0.5, 3, 'rgba(255,255,255,0.95)');
             drawHand((m/60+s/3600)*2*Math.PI, r*0.72, 2, 'rgba(255,255,255,0.9)');
             drawHand((s/60)*2*Math.PI, r*0.78, 1, '#fbbf24');
-            ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
+            ctx.beginPath(); ctx.arc(cx,cy,3,0,2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
         }
         function updateClock() {
             const now=new Date(), h=now.getHours(), m=now.getMinutes(), s=now.getSeconds();
-            document.getElementById('clock-time').textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-            document.getElementById('clock-date').textContent = HARI[now.getDay()]+', '+now.getDate()+' '+BULAN[now.getMonth()]+' '+now.getFullYear();
-            document.getElementById('clock-timezone').textContent = getTimezoneLabel(-now.getTimezoneOffset());
-            const canvas = document.getElementById('analog-clock');
-            if (canvas) drawAnalogClock(canvas, h, m, s);
+            document.getElementById('clock-time').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+            document.getElementById('clock-date').textContent=HARI[now.getDay()]+', '+now.getDate()+' '+BULAN[now.getMonth()]+' '+now.getFullYear();
+            document.getElementById('clock-timezone').textContent=getTimezoneLabel(-now.getTimezoneOffset());
+            const canvas=document.getElementById('analog-clock');
+            if(canvas) drawAnalogClock(canvas,h,m,s);
         }
-        updateClock(); setInterval(updateClock, 1000);
+        updateClock(); setInterval(updateClock,1000);
     })();
     </script>
 
@@ -207,30 +225,74 @@ if ($result_sesi_list) {
                     <span class="text-white font-semibold text-sm">Kamera Scanner</span>
                 </div>
                 <div class="p-4">
-                    <div id="scanner-container" class="w-full border-2 border-blue-200 rounded-lg overflow-hidden bg-gray-100">
+                    <div class="w-full border-2 border-blue-200 rounded-lg overflow-hidden bg-gray-100">
                         <div id="reader" class="w-full"></div>
                     </div>
                 </div>
             </div>
-
-            <!-- Area Hasil Scan -->
-            <div id="result-container" class="mt-4">
-                <div x-show="scanResult.message"
-                     :class="{
-                         'bg-green-50 text-green-800 border-green-300': scanResult.status === 'success',
-                         'bg-red-50 text-red-800 border-red-300': scanResult.status === 'error',
-                         'bg-blue-50 text-blue-800 border-blue-300': scanResult.status === 'info'
-                     }"
-                     class="p-4 border rounded-xl flex items-center gap-3 shadow-sm">
-                    <i :class="{
-                           'fas fa-circle-check text-green-500 text-xl': scanResult.status === 'success',
-                           'fas fa-circle-xmark text-red-500 text-xl': scanResult.status === 'error',
-                           'fas fa-spinner fa-spin text-blue-500 text-xl': scanResult.status === 'info'
-                       }"></i>
-                    <span class="font-medium text-sm" x-text="scanResult.message"></span>
-                </div>
-            </div>
         </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- Overlay Notifikasi Hasil Scan (Terpusat & Animasi)       -->
+    <!-- ======================================================= -->
+    <div x-show="scanResult.visible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+         style="display:none;">
+
+        <template x-if="scanResult.visible">
+            <div class="scan-result-card bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center">
+
+                <!-- Icon: Memproses (info) -->
+                <template x-if="scanResult.status === 'info'">
+                    <div class="mb-4 flex flex-col items-center">
+                        <div class="relative w-20 h-20 flex items-center justify-center">
+                            <div class="absolute inset-0 rounded-full bg-blue-100 pulse-ring"></div>
+                            <div class="w-14 h-14 rounded-full border-4 border-blue-200 border-t-blue-500 animate-spin"></div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Icon: Berhasil (success) — animasi centang -->
+                <template x-if="scanResult.status === 'success'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle class="anim-circle" cx="26" cy="26" r="25"
+                                    stroke="#22c55e" stroke-width="2" fill="none"/>
+                            <path class="anim-check"
+                                  d="M14 27l8 8 16-16"
+                                  stroke="#22c55e" stroke-width="3"
+                                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                    </div>
+                </template>
+
+                <!-- Icon: Gagal (error) — animasi silang -->
+                <template x-if="scanResult.status === 'error'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle class="anim-circle" cx="26" cy="26" r="25"
+                                    stroke="#ef4444" stroke-width="2" fill="none"/>
+                            <line class="anim-cross1" x1="17" y1="17" x2="35" y2="35"
+                                  stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                            <line class="anim-cross2" x1="35" y1="17" x2="17" y2="35"
+                                  stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </template>
+
+                <!-- Pesan -->
+                <p class="font-semibold text-gray-800 text-base leading-snug" x-text="scanResult.message"></p>
+                <p class="text-xs text-gray-400 mt-2"
+                   x-show="scanResult.status !== 'info'">Melanjutkan otomatis...</p>
+            </div>
+        </template>
     </div>
 
 </div>
