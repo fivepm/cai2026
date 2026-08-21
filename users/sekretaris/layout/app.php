@@ -202,7 +202,7 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                 </div> -->
 
                 <!-- Menu Presensi -->
-                 <!-- <div>
+                 <div>
                     <button @click="isPresensiOpen = !isPresensiOpen" class="w-full flex items-center justify-between px-4 py-2.5 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-150 rounded-md">
                         <div class="flex items-center">
                             <i class="fa-solid fa-clipboard-user w-6"></i>
@@ -215,7 +215,7 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                         <a href="sekretaris?page=presensi/scanner_kehadiran" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'presensi/scanner_kehadiran' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Scanner Kehadiran</a>
                         <a href="sekretaris?page=presensi/log_kehadiran" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'presensi/log_kehadiran' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Log Kehadiran</a>
                     </div>
-                </div> -->
+                </div>
 
                 <!-- Tambahkan menu lain di sini -->
             </nav>

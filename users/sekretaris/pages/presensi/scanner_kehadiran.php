@@ -40,10 +40,61 @@ if ($result_sesi_list) {
             html5QrCode: null,
             _dismissTimer: null,
 
+            // --- State Kamera ---
+            cameras: [],
+            selectedCamera: '',
+            camerasLoaded: false,
+            camerasError: '',
+
+            // Lifecycle Alpine.js: dipanggil otomatis saat komponen init
+            init() {
+                this.loadCameras();
+
+                // Saat kamera berganti & scanner sedang aktif, restart scanner
+                this.$watch('selectedCamera', (newVal, oldVal) => {
+                    if (oldVal && newVal && newVal !== oldVal && this.sesiAktif) {
+                        this.restartWithNewCamera();
+                    }
+                });
+            },
+
+            loadCameras() {
+                this.camerasLoaded = false;
+                this.camerasError  = '';
+                Html5Qrcode.getCameras()
+                    .then(devices => {
+                        if (devices && devices.length > 0) {
+                            this.cameras = devices;
+                            // Pilih kamera belakang/environment secara default
+                            const back = devices.find(d => /back|rear|environment/i.test(d.label));
+                            this.selectedCamera = back ? back.id : devices[0].id;
+                        } else {
+                            this.camerasError = 'Tidak ada kamera yang ditemukan.';
+                        }
+                        this.camerasLoaded = true;
+                    })
+                    .catch(err => {
+                        this.camerasError = 'Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.';
+                        this.camerasLoaded = true;
+                        console.error('Camera enumeration error:', err);
+                    });
+            },
+
+            // Hentikan scanner lama, lalu mulai ulang dengan kamera baru
+            restartWithNewCamera() {
+                if (this.html5QrCode && this.html5QrCode.isScanning) {
+                    this.html5QrCode.stop()
+                        .then(() => { this.startScanner(); })
+                        .catch(err => console.error('Stop error:', err));
+                } else {
+                    this.startScanner();
+                }
+            },
+
             mulaiSesi() {
-                if (!this.sesiTerpilih) return;
-                const selectedOption = document.querySelector(`#sesi_id option[value='${this.sesiTerpilih}']`);
-                this.namaSesiTerpilih = selectedOption.textContent;
+                if (!this.sesiTerpilih || !this.selectedCamera) return;
+                const opt = document.querySelector(`#sesi_id option[value='${this.sesiTerpilih}']`);
+                this.namaSesiTerpilih = opt ? opt.textContent : '';
                 this.sesiAktif = true;
                 this.scanResult = { status: '', message: '', visible: false };
                 this.$nextTick(() => { this.startScanner(); });
@@ -52,27 +103,32 @@ if ($result_sesi_list) {
             gantiSesi() {
                 if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
                 this.stopScanner();
-                this.sesiAktif = false;
+                this.sesiAktif    = false;
                 this.sesiTerpilih = '';
-                this.scanResult = { status: '', message: '', visible: false };
+                this.scanResult   = { status: '', message: '', visible: false };
             },
 
             startScanner() {
+                if (!this.selectedCamera) return;
                 if (!this.html5QrCode) this.html5QrCode = new Html5Qrcode("reader");
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 this.html5QrCode.start(
-                    { facingMode: "environment" },
+                    this.selectedCamera,
                     config,
                     (decodedText) => { this.html5QrCode.pause(); this.handleScan(decodedText); },
                     () => {}
                 ).catch(() => {
-                    this.scanResult = { status: 'error', message: 'Gagal memulai kamera. Pastikan Anda memberikan izin dan menggunakan HTTPS.', visible: true };
+                    this.scanResult = {
+                        status: 'error',
+                        message: 'Gagal memulai kamera. Pastikan izin kamera diberikan.',
+                        visible: true
+                    };
                 });
             },
 
             stopScanner() {
                 if (this.html5QrCode && this.html5QrCode.isScanning) {
-                    this.html5QrCode.stop().catch(err => console.error("Gagal menghentikan scanner.", err));
+                    this.html5QrCode.stop().catch(err => console.error("Stop scanner error:", err));
                 }
             },
 
@@ -89,12 +145,8 @@ if ($result_sesi_list) {
                     if (!response.ok) return response.json().then(err => { throw new Error(err.message || 'Error tidak diketahui'); });
                     return response.json();
                 })
-                .then(data => {
-                    this.scanResult = { ...data, visible: true };
-                })
-                .catch(error => {
-                    this.scanResult = { status: 'error', message: `Terjadi masalah: ${error.message}`, visible: true };
-                })
+                .then(data  => { this.scanResult = { ...data, visible: true }; })
+                .catch(error => { this.scanResult = { status: 'error', message: `Terjadi masalah: ${error.message}`, visible: true }; })
                 .finally(() => {
                     this._dismissTimer = setTimeout(() => {
                         this.scanResult.visible = false;
@@ -141,71 +193,118 @@ if ($result_sesi_list) {
             if (offset === 420) return 'WIB';
             if (offset === 480) return 'WITA';
             if (offset === 540) return 'WIT';
-            const h=Math.floor(Math.abs(offset)/60), m=Math.abs(offset)%60, sign=offset>=0?'+':'-';
+            const h=Math.floor(Math.abs(offset)/60),m=Math.abs(offset)%60,sign=offset>=0?'+':'-';
             return 'UTC'+sign+String(h).padStart(2,'0')+(m?':'+String(m).padStart(2,'0'):'');
         }
-        function drawAnalogClock(canvas, h, m, s) {
-            const ctx=canvas.getContext('2d'), cx=canvas.width/2, cy=canvas.height/2, r=cx-3;
+        function drawAnalogClock(canvas,h,m,s) {
+            const ctx=canvas.getContext('2d'),cx=canvas.width/2,cy=canvas.height/2,r=cx-3;
             ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.fill();
-            ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5; ctx.stroke();
-            for(let i=0;i<12;i++){
-                const a=(i/12)*2*Math.PI-Math.PI/2;
-                ctx.beginPath(); ctx.arc(cx+Math.cos(a)*(r-5),cy+Math.sin(a)*(r-5),i%3===0?2:1,0,2*Math.PI);
-                ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fill();
-            }
-            function drawHand(angle,length,width,color){
-                ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
-                ctx.beginPath(); ctx.moveTo(0,length*0.2); ctx.lineTo(0,-length);
-                ctx.strokeStyle=color; ctx.lineWidth=width; ctx.lineCap='round'; ctx.stroke(); ctx.restore();
-            }
-            drawHand(((h%12)/12+m/720+s/43200)*2*Math.PI, r*0.5, 3, 'rgba(255,255,255,0.95)');
-            drawHand((m/60+s/3600)*2*Math.PI, r*0.72, 2, 'rgba(255,255,255,0.9)');
-            drawHand((s/60)*2*Math.PI, r*0.78, 1, '#fbbf24');
-            ctx.beginPath(); ctx.arc(cx,cy,3,0,2*Math.PI); ctx.fillStyle='#fbbf24'; ctx.fill();
+            ctx.beginPath();ctx.arc(cx,cy,r,0,2*Math.PI);ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fill();
+            ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1.5;ctx.stroke();
+            for(let i=0;i<12;i++){const a=(i/12)*2*Math.PI-Math.PI/2;ctx.beginPath();ctx.arc(cx+Math.cos(a)*(r-5),cy+Math.sin(a)*(r-5),i%3===0?2:1,0,2*Math.PI);ctx.fillStyle='rgba(255,255,255,0.7)';ctx.fill();}
+            function drawHand(angle,length,width,color){ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.beginPath();ctx.moveTo(0,length*0.2);ctx.lineTo(0,-length);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();ctx.restore();}
+            drawHand(((h%12)/12+m/720+s/43200)*2*Math.PI,r*0.5,3,'rgba(255,255,255,0.95)');
+            drawHand((m/60+s/3600)*2*Math.PI,r*0.72,2,'rgba(255,255,255,0.9)');
+            drawHand((s/60)*2*Math.PI,r*0.78,1,'#fbbf24');
+            ctx.beginPath();ctx.arc(cx,cy,3,0,2*Math.PI);ctx.fillStyle='#fbbf24';ctx.fill();
         }
-        function updateClock() {
-            const now=new Date(), h=now.getHours(), m=now.getMinutes(), s=now.getSeconds();
-            document.getElementById('clock-time').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-            document.getElementById('clock-date').textContent=HARI[now.getDay()]+', '+now.getDate()+' '+BULAN[now.getMonth()]+' '+now.getFullYear();
-            document.getElementById('clock-timezone').textContent=getTimezoneLabel(-now.getTimezoneOffset());
-            const canvas=document.getElementById('analog-clock');
-            if(canvas) drawAnalogClock(canvas,h,m,s);
-        }
-        updateClock(); setInterval(updateClock,1000);
+        function updateClock(){const now=new Date(),h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();document.getElementById('clock-time').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');document.getElementById('clock-date').textContent=HARI[now.getDay()]+', '+now.getDate()+' '+BULAN[now.getMonth()]+' '+now.getFullYear();document.getElementById('clock-timezone').textContent=getTimezoneLabel(-now.getTimezoneOffset());const canvas=document.getElementById('analog-clock');if(canvas)drawAnalogClock(canvas,h,m,s);}
+        updateClock();setInterval(updateClock,1000);
     })();
     </script>
 
-    <!-- Tampilan Awal: Pilih Sesi -->
+    <!-- ===================================================== -->
+    <!-- Tampilan Awal: Pilih Sesi + Pilih Kamera              -->
+    <!-- ===================================================== -->
     <div x-show="!sesiAktif" x-transition class="mt-6">
         <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
             <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
-                <i class="fas fa-calendar-check text-white text-sm"></i>
-                <span class="text-white font-semibold text-sm">Pilih Sesi Presensi</span>
+                <i class="fas fa-camera-rotate text-white text-sm"></i>
+                <span class="text-white font-semibold text-sm">Konfigurasi Scanner</span>
             </div>
-            <div class="p-6">
-                <label for="sesi_id" class="block text-sm font-semibold text-gray-700 mb-2">
-                    <i class="fas fa-list-check mr-1 text-blue-500"></i>Sesi yang Tersedia
-                </label>
-                <select x-model="sesiTerpilih" id="sesi_id"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">-- Pilih Sesi --</option>
-                    <?php foreach ($sesi_list as $sesi_item): ?>
-                        <option value="<?php echo $sesi_item['id']; ?>"><?php echo htmlspecialchars($sesi_item['nama_sesi']); ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <button @click="mulaiSesi" :disabled="!sesiTerpilih"
-                        class="mt-4 w-full px-4 py-2.5 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-sm">
+            <div class="p-6 space-y-5">
+
+                <!-- Pilih Sesi -->
+                <div>
+                    <label for="sesi_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-list-check mr-1 text-blue-500"></i>Pilih Sesi Presensi
+                    </label>
+                    <select x-model="sesiTerpilih" id="sesi_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Pilih Sesi --</option>
+                        <?php foreach ($sesi_list as $sesi_item): ?>
+                            <option value="<?php echo $sesi_item['id']; ?>"><?php echo htmlspecialchars($sesi_item['nama_sesi']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100"></div>
+
+                <!-- Pilih Kamera -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-camera mr-1 text-blue-500"></i>Pilih Kamera
+                    </label>
+
+                    <!-- Loading kamera -->
+                    <div x-show="!camerasLoaded"
+                         class="flex items-center gap-2 px-3 py-2.5 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-600">
+                        <i class="fas fa-spinner fa-spin text-blue-400"></i>
+                        <span>Mendeteksi kamera yang tersedia...</span>
+                    </div>
+
+                    <!-- Error kamera -->
+                    <div x-show="camerasLoaded && camerasError"
+                         class="flex items-start gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                        <i class="fas fa-triangle-exclamation mt-0.5 flex-shrink-0"></i>
+                        <span x-text="camerasError"></span>
+                    </div>
+
+                    <!-- Dropdown kamera -->
+                    <div x-show="camerasLoaded && !camerasError">
+                        <select x-model="selectedCamera"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <template x-for="(cam, idx) in cameras" :key="cam.id">
+                                <option :value="cam.id"
+                                        x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
+                            </template>
+                        </select>
+                        <p x-show="cameras.length > 1" class="mt-1.5 text-xs text-gray-400">
+                            <i class="fas fa-info-circle mr-0.5"></i>
+                            <span x-text="cameras.length + ' kamera terdeteksi. Pilih kamera yang ingin digunakan.'"></span>
+                        </p>
+                        <p x-show="cameras.length === 1" class="mt-1.5 text-xs text-gray-400">
+                            <i class="fas fa-check-circle text-green-400 mr-0.5"></i>
+                            1 kamera terdeteksi.
+                        </p>
+                    </div>
+
+                    <!-- Tombol refresh kamera -->
+                    <button @click="loadCameras()"
+                            class="mt-2 text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 transition-colors">
+                        <i class="fas fa-arrows-rotate"></i> Muat ulang daftar kamera
+                    </button>
+                </div>
+
+                <!-- Tombol Mulai -->
+                <button @click="mulaiSesi"
+                        :disabled="!sesiTerpilih || !selectedCamera || !camerasLoaded"
+                        class="w-full px-4 py-2.5 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-sm">
                     <i class="fas fa-qrcode"></i> Mulai Presensi
                 </button>
+
             </div>
         </div>
     </div>
 
-    <!-- Tampilan Scanner -->
+    <!-- ===================================================== -->
+    <!-- Tampilan Scanner Aktif                                  -->
+    <!-- ===================================================== -->
     <div x-show="sesiAktif" x-transition x-cloak class="mt-6">
-        <!-- Info Bar -->
-        <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 mb-5">
+
+        <!-- Info Bar: Sesi + Ganti Sesi -->
+        <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
                 <span class="text-sm text-gray-700">Sesi Aktif:</span>
@@ -217,8 +316,25 @@ if ($result_sesi_list) {
             </button>
         </div>
 
+        <!-- Pemilih Kamera (tampil hanya jika ada lebih dari 1 kamera) -->
+        <div x-show="cameras.length > 1"
+             class="mt-3 flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+            <i class="fas fa-camera text-blue-400 text-sm flex-shrink-0"></i>
+            <span class="text-xs text-gray-500 flex-shrink-0 font-medium">Kamera:</span>
+            <div class="flex-1 relative">
+                <select x-model="selectedCamera"
+                        class="w-full text-xs font-semibold text-gray-700 bg-transparent border-0 focus:ring-0 cursor-pointer pr-5 appearance-none">
+                    <template x-for="(cam, idx) in cameras" :key="cam.id">
+                        <option :value="cam.id"
+                                x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
+                    </template>
+                </select>
+                <i class="fas fa-chevron-down text-gray-400 text-xs absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+        </div>
+
         <!-- Scanner Area -->
-        <div class="max-w-lg mx-auto">
+        <div class="max-w-lg mx-auto mt-3">
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
                 <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
                     <i class="fas fa-camera text-white text-sm"></i>
@@ -231,6 +347,7 @@ if ($result_sesi_list) {
                 </div>
             </div>
         </div>
+
     </div>
 
     <!-- ======================================================= -->
@@ -249,7 +366,7 @@ if ($result_sesi_list) {
         <template x-if="scanResult.visible">
             <div class="scan-result-card bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center">
 
-                <!-- Icon: Memproses (info) -->
+                <!-- Memproses -->
                 <template x-if="scanResult.status === 'info'">
                     <div class="mb-4 flex flex-col items-center">
                         <div class="relative w-20 h-20 flex items-center justify-center">
@@ -259,38 +376,29 @@ if ($result_sesi_list) {
                     </div>
                 </template>
 
-                <!-- Icon: Berhasil (success) — animasi centang -->
+                <!-- Berhasil — animasi centang -->
                 <template x-if="scanResult.status === 'success'">
                     <div class="mb-4 flex justify-center">
-                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle class="anim-circle" cx="26" cy="26" r="25"
-                                    stroke="#22c55e" stroke-width="2" fill="none"/>
-                            <path class="anim-check"
-                                  d="M14 27l8 8 16-16"
-                                  stroke="#22c55e" stroke-width="3"
-                                  stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#22c55e" stroke-width="2"/>
+                            <path  class="anim-check" d="M14 27l8 8 16-16" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                 </template>
 
-                <!-- Icon: Gagal (error) — animasi silang -->
+                <!-- Gagal — animasi silang -->
                 <template x-if="scanResult.status === 'error'">
                     <div class="mb-4 flex justify-center">
-                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle class="anim-circle" cx="26" cy="26" r="25"
-                                    stroke="#ef4444" stroke-width="2" fill="none"/>
-                            <line class="anim-cross1" x1="17" y1="17" x2="35" y2="35"
-                                  stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
-                            <line class="anim-cross2" x1="35" y1="17" x2="17" y2="35"
-                                  stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#ef4444" stroke-width="2"/>
+                            <line  class="anim-cross1" x1="17" y1="17" x2="35" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                            <line  class="anim-cross2" x1="35" y1="17" x2="17" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
                         </svg>
                     </div>
                 </template>
 
-                <!-- Pesan -->
                 <p class="font-semibold text-gray-800 text-base leading-snug" x-text="scanResult.message"></p>
-                <p class="text-xs text-gray-400 mt-2"
-                   x-show="scanResult.status !== 'info'">Melanjutkan otomatis...</p>
+                <p class="text-xs text-gray-400 mt-2" x-show="scanResult.status !== 'info'">Melanjutkan otomatis...</p>
             </div>
         </template>
     </div>
