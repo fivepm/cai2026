@@ -45,10 +45,140 @@ $grand_total_pendaftar['total'] = $grand_total_pendaftar['hadir'] + $grand_total
 
 <!-- Mulai HTML Konten -->
 <div class="space-y-8">
-    <div>
-        <h1 class="text-3xl font-semibold text-gray-800">Dashboard Sekretaris</h1>
-        <p class="mt-1 text-gray-600">Selamat datang! Berikut adalah ringkasan data terbaru.</p>
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-semibold text-gray-800">Dashboard Sekretaris</h1>
+            <p class="mt-1 text-gray-600">Selamat datang! Berikut adalah ringkasan data terbaru.</p>
+        </div>
+
+        <!-- Widget Jam Real-Time -->
+        <div id="clock-widget" class="flex-shrink-0 bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg p-4 text-white flex items-center gap-4 min-w-[220px]">
+            <!-- Jam Digital -->
+            <div class="text-center flex-1">
+                <div id="clock-time" class="text-3xl font-bold tracking-widest tabular-nums leading-none">00:00:00</div>
+                <div id="clock-date" class="text-xs text-blue-200 mt-1 font-medium">—</div>
+                <div class="mt-2 inline-flex items-center gap-1.5 bg-blue-600/60 backdrop-blur-sm border border-blue-400/40 rounded-full px-3 py-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse inline-block"></span>
+                    <span id="clock-timezone" class="text-xs font-semibold text-blue-100 tracking-wide">WIB</span>
+                </div>
+            </div>
+            <!-- Pemisah -->
+            <div class="w-px h-14 bg-blue-500/50"></div>
+            <!-- Jam Analog Mini -->
+            <div class="flex-shrink-0">
+                <canvas id="analog-clock" width="64" height="64"></canvas>
+            </div>
+        </div>
     </div>
+
+    <script>
+    (function () {
+        const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        const BULAN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
+        function getTimezoneLabel(offset) {
+            if (offset === 420) return 'WIB';
+            if (offset === 480) return 'WITA';
+            if (offset === 540) return 'WIT';
+            const h = Math.floor(Math.abs(offset) / 60);
+            const m = Math.abs(offset) % 60;
+            const sign = offset >= 0 ? '+' : '-';
+            return 'UTC' + sign + String(h).padStart(2,'0') + (m ? ':'+String(m).padStart(2,'0') : '');
+        }
+
+        function drawAnalogClock(canvas, h, m, s) {
+            const ctx = canvas.getContext('2d');
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const r  = cx - 3;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Lingkaran luar
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Tanda menit (12 titik)
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * 2 * Math.PI - Math.PI / 2;
+                const ix = cx + Math.cos(angle) * (r - 5);
+                const iy = cy + Math.sin(angle) * (r - 5);
+                ctx.beginPath();
+                ctx.arc(ix, iy, i % 3 === 0 ? 2 : 1, 0, 2 * Math.PI);
+                ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                ctx.fill();
+            }
+
+            function drawHand(angle, length, width, color) {
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(0, length * 0.2);
+                ctx.lineTo(0, -length);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Jarum jam
+            const hAngle = ((h % 12) / 12 + m / 720 + s / 43200) * 2 * Math.PI;
+            drawHand(hAngle, r * 0.5, 3, 'rgba(255,255,255,0.95)');
+
+            // Jarum menit
+            const mAngle = (m / 60 + s / 3600) * 2 * Math.PI;
+            drawHand(mAngle, r * 0.72, 2, 'rgba(255,255,255,0.9)');
+
+            // Jarum detik
+            const sAngle = (s / 60) * 2 * Math.PI;
+            drawHand(sAngle, r * 0.78, 1, '#fbbf24');
+
+            // Titik tengah
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fill();
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+
+            // Jam digital
+            document.getElementById('clock-time').textContent =
+                String(h).padStart(2,'0') + ':' +
+                String(m).padStart(2,'0') + ':' +
+                String(s).padStart(2,'0');
+
+            // Tanggal
+            document.getElementById('clock-date').textContent =
+                HARI[now.getDay()] + ', ' +
+                now.getDate() + ' ' +
+                BULAN[now.getMonth()] + ' ' +
+                now.getFullYear();
+
+            // Zona waktu
+            const offset = -now.getTimezoneOffset(); // menit, positif = timur
+            document.getElementById('clock-timezone').textContent = getTimezoneLabel(offset);
+
+            // Jam analog
+            const canvas = document.getElementById('analog-clock');
+            if (canvas) drawAnalogClock(canvas, h, m, s);
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+    })();
+    </script>
 
     <!-- Bagian Ringkasan Pendaftar -->
     <div class="bg-white p-6 rounded-lg shadow-md">

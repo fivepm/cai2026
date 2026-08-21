@@ -162,7 +162,7 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                     </div>
                 </div> -->
 
-                <!-- Menu Toggle untuk Perizinan -->
+                <!-- Menu Toggle untuk Administrasi -->
                 <div>
                     <button @click="isAdministrasiOpen = !isAdministrasiOpen" class="w-full flex items-center justify-between px-4 py-2.5 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-150 rounded-md">
                         <div class="flex items-center">
@@ -202,7 +202,20 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                 </div> -->
 
                 <!-- Menu Presensi -->
-                <!-- <div> -->
+                 <!-- <div>
+                    <button @click="isPresensiOpen = !isPresensiOpen" class="w-full flex items-center justify-between px-4 py-2.5 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-150 rounded-md">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-clipboard-user w-6"></i>
+                            <span class="mx-4 font-medium">Presensi</span>
+                        </div>
+                        <i class="fas transition-transform duration-200" :class="{ 'fa-chevron-down': isPresensiOpen, 'fa-chevron-right': !isPresensiOpen }"></i>
+                    </button>
+                    <div x-show="isPresensiOpen" x-transition class="mt-1 ml-4 space-y-1 border-l-2 border-blue-400 pl-2">
+                        <a href="sekretaris?page=presensi/manajemen_sesi_presensi" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'presensi/manajemen_sesi_presensi' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Manajemen Sesi</a>
+                        <a href="sekretaris?page=presensi/scanner_kehadiran" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'presensi/scanner_kehadiran' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Scanner Kehadiran</a>
+                        <a href="sekretaris?page=presensi/log_kehadiran" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'presensi/log_kehadiran' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Log Kehadiran</a>
+                    </div>
+                </div> -->
 
                 <!-- Tambahkan menu lain di sini -->
             </nav>
