@@ -381,12 +381,12 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
 
                             <?php
                             $materis = [
-                                0 => 'Menjemput Pertolongan Allah dengan Menolong Agama Allah',
-                                1 => 'Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus',
-                                2 => 'Dampak Perbuatan Maksiat',
+                                0 => 'Dampak Perbuatan Maksiat',
+                                1 => 'Wajibnya Menjaga Generus dari Kemaksiatan di Akhir Zaman',
+                                2 => 'Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus',
                                 3 => 'Mencetak Generus yang Sukses Dunia dan Akhirat',
-                                4 => 'Meningkatkan Semangat Juang Muballigh-Muballighot',
-                                5 => 'Wajibnya Menjaga Generus dari Kemaksiatan',
+                                4 => 'Menjemput Pertolongan Allah dengan Menolong Agama Allah',
+                                5 => 'Meningkatkan Semangat Juang Muballigh-Muballighot',
                             ];
                             foreach ($materis as $idx => $judul):
                             ?>
