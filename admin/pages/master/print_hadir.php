@@ -114,7 +114,7 @@ $pendaftar_list = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     </table>
 
     <div class="mt-8 text-right no-print">
-        <button onclick="window.print()" class="px-4 py-2 bg-red-600 text-white rounded-md">Cetak</button>
+        <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Cetak</button>
     </div>
 </body>
 

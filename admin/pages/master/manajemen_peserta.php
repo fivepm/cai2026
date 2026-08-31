@@ -149,20 +149,24 @@ $role_user = $_SESSION['user_role'];
     @keydown.escape.window="isFilterModalOpen = false; isDetailModalOpen = false; isQrCodeModalOpen = false; isEditModalOpen = false; isDeleteModalOpen = false; isBuktiModalOpen = false">
 
     <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-semibold text-gray-800">Manajemen Peserta Hadir</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Manajemen Peserta Hadir</h1>
         <div class="flex space-x-2">
-            <button @click="isFilterModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-filter mr-2"></i>Filter</button>
-            <button @click="isDetailModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-chart-pie mr-2"></i>Ringkasan</button>
-            <button @click="downloadAllQrCodes(allParticipants)" :disabled="isDownloading" class="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 flex items-center">
+            <button @click="isFilterModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-lg shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-filter mr-2"></i>Filter</button>
+            <button @click="isDetailModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-lg shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-chart-pie mr-2"></i>Ringkasan</button>
+            <button @click="downloadAllQrCodes(allParticipants)" :disabled="isDownloading" class="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center">
                 <i class="fas fa-cloud-download-alt mr-2"></i><span x-text="isDownloading ? 'Mengunduh...' : 'Download QR'"></span>
             </button>
         </div>
     </div>
 
-    <div class="mt-6 overflow-hidden bg-white shadow-md rounded-lg">
+    <div class="mt-5 bg-white shadow-md rounded-xl overflow-hidden">
+        <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
+            <i class="fas fa-list text-white text-sm"></i>
+            <span class="text-white font-semibold text-sm">Data Tabel</span>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full whitespace-nowrap text-sm">
-                <thead class="bg-gray-200">
+                <thead class="bg-blue-50 text-blue-800 border-b border-blue-100">
                     <tr class="text-left font-bold">
                         <th class="px-4 py-3">No</th>
                         <th class="px-4 py-3">Nama</th>
@@ -186,7 +190,7 @@ $role_user = $_SESSION['user_role'];
                     <?php
                     $no = 1;
                     foreach ($peserta_list as $peserta): ?>
-                        <tr class="hover:bg-yellow-300">
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-4 py-2"><?php echo $no++; ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['nama']); ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['kelompok']); ?></td>
@@ -212,7 +216,7 @@ $role_user = $_SESSION['user_role'];
                             ?>
                                 <td class="px-4 py-2">
                                     <button @click="isEditModalOpen = true; editData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-pencil-alt"></i></button>
-                                    <button @click="isDeleteModalOpen = true; deleteData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button>
+                                    <button @click="isDeleteModalOpen = true; deleteData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-blue-600 hover:text-blue-800"><i class="fas fa-trash-alt"></i></button>
                                 </td>
                             <?php
                             }
@@ -226,84 +230,90 @@ $role_user = $_SESSION['user_role'];
 
     <!-- Modal Edit -->
     <div x-show="isEditModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isEditModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 class="text-2xl font-bold mb-4">Edit Peserta</h3>
+        <div @click.away="isEditModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Edit Peserta</h3>
+            </div>
             <form method="POST" action="">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="peserta_id" :value="editData.id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="editData.nama" required class="mt-1 w-full border-gray-300 rounded-md"></div>
-                    <div><label class="block text-sm">Kelompok</label><select name="kelompok" x-model="editData.kelompok" required class="mt-1 w-full border-gray-300 rounded-md">
+                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="editData.nama" required class="mt-1 w-full border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm">Kelompok</label><select name="kelompok" x-model="editData.kelompok" required class="mt-1 w-full border-gray-300 rounded-lg">
                             <option value="Bintaran">Bintaran</option>
                             <option value="Gedongkuning">Gedongkuning</option>
                             <option value="Jombor">Jombor</option>
                             <option value="Sunten">Sunten</option>
                         </select></div>
-                    <div><label class="block text-sm">Jenis Kelamin</label><select name="jenis_kelamin" x-model="editData.jenis_kelamin" required class="mt-1 w-full border-gray-300 rounded-md">
+                    <div><label class="block text-sm">Jenis Kelamin</label><select name="jenis_kelamin" x-model="editData.jenis_kelamin" required class="mt-1 w-full border-gray-300 rounded-lg">
                             <option value="Laki-laki">Laki-laki</option>
                             <option value="Perempuan">Perempuan</option>
                         </select></div>
-                    <div><label class="block text-sm">Metode Pembayaran</label><select name="metode_pembayaran" x-model="editData.metode_pembayaran" class="mt-1 w-full border-gray-300 rounded-md">
+                    <div><label class="block text-sm">Metode Pembayaran</label><select name="metode_pembayaran" x-model="editData.metode_pembayaran" class="mt-1 w-full border-gray-300 rounded-lg">
                             <option value="Cash">Cash</option>
                             <option value="Dana">Dana</option>
                             <option value="Line Bank">Line Bank</option>
                         </select></div>
-                    <div class="md:col-span-2"><label class="block text-sm">Status Pembayaran</label><select name="status_pembayaran" x-model="editData.status_pembayaran" required class="mt-1 w-full border-gray-300 rounded-md">
+                    <div class="md:col-span-2"><label class="block text-sm">Status Pembayaran</label><select name="status_pembayaran" x-model="editData.status_pembayaran" required class="mt-1 w-full border-gray-300 rounded-lg">
                             <option value="belum_diverifikasi">Belum Diverifikasi</option>
                             <option value="lunas">Lunas</option>
                             <option value="ditolak">Ditolak</option>
                         </select></div>
                     <div class="md:col-span-2 flex items-center"><input type="checkbox" name="pakai_tabungan" :checked="editData.pakai_tabungan === 'yes'" class="h-4 w-4 rounded"><label class="ml-2 text-sm">Pakai Tabungan</label></div>
                 </div>
-                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isEditModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Simpan</button></div>
+                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isEditModalOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Simpan</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Hapus -->
     <div x-show="isDeleteModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isDeleteModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
-            <h3 class="text-xl font-bold">Konfirmasi Hapus</h3>
+        <div @click.away="isDeleteModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4">
+            <div class="bg-red-600 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Konfirmasi Hapus</h3>
+            </div>
             <p class="mt-2">Yakin ingin menghapus peserta <strong x-text="deleteData.nama"></strong>?</p>
             <form method="POST" action="" class="mt-6 flex justify-end space-x-4">
                 <input type="hidden" name="action" value="delete"><input type="hidden" name="peserta_id" :value="deleteData.id">
-                <button type="button" @click="isDeleteModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Ya, Hapus</button>
+                <button type="button" @click="isDeleteModalOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Ya, Hapus</button>
             </form>
         </div>
     </div>
 
     <!-- Modal Lihat Bukti -->
     <div x-show="isBuktiModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isBuktiModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-xl p-4 mx-4 relative">
-            <button @click="isBuktiModalOpen = false" class="absolute -top-3 -right-3 bg-red-600 text-white rounded-full h-8 w-8">&times;</button>
+        <div @click.away="isBuktiModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 mx-4 relative">
+            <button @click="isBuktiModalOpen = false" class="absolute -top-3 -right-3 bg-blue-600 text-white rounded-full h-8 w-8">&times;</button>
             <img :src="buktiUrl" alt="Bukti Pembayaran" class="w-full h-auto max-h-[80vh] object-contain">
         </div>
     </div>
 
     <!-- Modal Filter, Ringkasan, Lihat QR (tidak ada perubahan) -->
     <div x-show="isFilterModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isFilterModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 class="text-2xl font-bold mb-4">Filter Peserta</h3>
+        <div @click.away="isFilterModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Filter Peserta</h3>
+            </div>
             <form action="admin" method="GET" class="space-y-4">
                 <input type="hidden" name="page" value="master/manajemen_peserta">
-                <div><label class="block text-sm">Cari Nama</label><input type="text" name="search" value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full border-gray-300 rounded-md"></div>
-                <div><label class="block text-sm">Filter Kelompok</label><select name="kelompok" class="mt-1 w-full border-gray-300 rounded-md">
+                <div><label class="block text-sm">Cari Nama</label><input type="text" name="search" value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full border-gray-300 rounded-lg"></div>
+                <div><label class="block text-sm">Filter Kelompok</label><select name="kelompok" class="mt-1 w-full border-gray-300 rounded-lg">
                         <option value="">Semua Kelompok</option>
                         <option value="Bintaran" <?php if ($filter_kelompok == 'Bintaran') echo 'selected'; ?>>Bintaran</option>
                         <option value="Gedongkuning" <?php if ($filter_kelompok == 'Gedongkuning') echo 'selected'; ?>>Gedongkuning</option>
                         <option value="Jombor" <?php if ($filter_kelompok == 'Jombor') echo 'selected'; ?>>Jombor</option>
                         <option value="Sunten" <?php if ($filter_kelompok == 'Sunten') echo 'selected'; ?>>Sunten</option>
                     </select></div>
-                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isFilterModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Terapkan</button></div>
+                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isFilterModalOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Terapkan</button></div>
             </form>
         </div>
     </div>
     <div x-show="isDetailModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isDetailModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 mx-4">
+        <div @click.away="isDetailModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 mx-4">
             <h3 class="text-2xl font-bold mb-4 text-center">Ringkasan Peserta Hadir</h3>
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap">
-                    <thead class="bg-gray-200">
+                    <thead class="bg-blue-50 text-blue-800 border-b border-blue-100">
                         <tr class="text-left font-bold">
                             <th class="px-6 py-3">Kelompok</th>
                             <th class="px-6 py-3 text-center">Laki-laki</th>
@@ -327,15 +337,17 @@ $role_user = $_SESSION['user_role'];
                     </tfoot>
                 </table>
             </div>
-            <div class="mt-6 flex justify-end"><button type="button" @click="isDetailModalOpen = false" class="px-4 py-2 bg-red-600 text-white rounded-md">Tutup</button></div>
+            <div class="mt-6 flex justify-end"><button type="button" @click="isDetailModalOpen = false" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Tutup</button></div>
         </div>
     </div>
     <div x-show="isQrCodeModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isQrCodeModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 mx-4 text-center">
-            <h3 class="text-xl font-bold" x-text="`QR Code untuk ${qrCodeName}`"></h3>
+        <div @click.away="isQrCodeModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 mx-4 text-center">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white" x-text="`QR Code untuk ${qrCodeName}`"></h3>
+            </div>
             <div class="my-4 p-4 bg-white">
                 <div id="qrcode-display" class="flex justify-center"></div>
-            </div><button type="button" @click="isQrCodeModalOpen = false" class="mt-6 w-full px-4 py-2 bg-red-600 text-white rounded-md">Tutup</button>
+            </div><button type="button" @click="isQrCodeModalOpen = false" class="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-lg">Tutup</button>
         </div>
     </div>
 </div>

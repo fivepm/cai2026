@@ -88,14 +88,18 @@ $staf_list = $conn->query("SELECT id, nama, username, role, kode_barcode FROM us
     @keydown.escape.window="isModalOpen = false; isQrCodeModalOpen = false">
 
     <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-semibold text-gray-800">Manajemen Staf</h1>
-        <button @click="isModalOpen = true; modalTitle = 'Tambah Staf Baru'; formAction = 'add'; stafData = { role: 'admin' };" class="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700"><i class="fas fa-plus mr-2"></i>Tambah Staf</button>
+        <h1 class="text-2xl font-bold text-gray-800">Manajemen Staf</h1>
+        <button @click="isModalOpen = true; modalTitle = 'Tambah Staf Baru'; formAction = 'add'; stafData = { role: 'admin' };" class="px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700"><i class="fas fa-plus mr-2"></i>Tambah Staf</button>
     </div>
 
-    <div class="mt-6 overflow-hidden bg-white shadow-md rounded-lg">
+    <div class="mt-5 bg-white shadow-md rounded-xl overflow-hidden">
+        <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
+            <i class="fas fa-list text-white text-sm"></i>
+            <span class="text-white font-semibold text-sm">Data Tabel</span>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full whitespace-nowrap">
-                <thead class="bg-gray-200">
+                <thead class="bg-blue-50 text-blue-800 border-b border-blue-100">
                     <tr class="text-left font-bold">
                         <th class="px-6 py-3">No</th>
                         <th class="px-6 py-3">Nama</th>
@@ -109,7 +113,7 @@ $staf_list = $conn->query("SELECT id, nama, username, role, kode_barcode FROM us
                     <?php
                     $no = 1;
                     foreach ($staf_list as $staf): ?>
-                        <tr class="hover:bg-yellow-300">
+                        <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4"><?php echo $no++; ?></td>
                             <td class="px-6 py-4"><?php echo htmlspecialchars($staf['nama']); ?></td>
                             <td class="px-6 py-4"><?php echo htmlspecialchars($staf['username']); ?></td>
@@ -123,7 +127,7 @@ $staf_list = $conn->query("SELECT id, nama, username, role, kode_barcode FROM us
                                 <form method="POST" action="admin.php?page=master/manajemen_admin" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus staf ini?');">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id" value="<?php echo $staf['id']; ?>">
-                                    <button type="submit" class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button>
+                                    <button type="submit" class="text-blue-600 hover:text-blue-800"><i class="fas fa-trash-alt"></i></button>
                                 </form>
                             </td>
                         </tr>
@@ -135,14 +139,16 @@ $staf_list = $conn->query("SELECT id, nama, username, role, kode_barcode FROM us
 
     <!-- Modal Tambah/Edit Staf -->
     <div x-show="isModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-        <div @click.away="isModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-            <h3 class="text-2xl font-bold mb-4" x-text="modalTitle"></h3>
+        <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white" x-text="modalTitle"></h3>
+            </div>
             <form method="POST" action="admin.php?page=master/manajemen_admin">
                 <input type="hidden" name="action" :value="formAction"><input type="hidden" name="id" :value="stafData.id">
                 <div class="space-y-4">
-                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="stafData.nama" required class="mt-1 w-full border-gray-300 rounded-md"></div>
-                    <div><label class="block text-sm">Username</label><input type="text" name="username" x-model="stafData.username" required class="mt-1 w-full border-gray-300 rounded-md"></div>
-                    <div><label class="block text-sm">Role</label><select name="role" x-model="stafData.role" required class="mt-1 w-full border-gray-300 rounded-md">
+                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="stafData.nama" required class="mt-1 w-full border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm">Username</label><input type="text" name="username" x-model="stafData.username" required class="mt-1 w-full border-gray-300 rounded-lg"></div>
+                    <div><label class="block text-sm">Role</label><select name="role" x-model="stafData.role" required class="mt-1 w-full border-gray-300 rounded-lg">
                             <option value="admin">Admin</option>
                             <option value="pembina">Pembina</option>
                             <option value="sekretaris">Sekretaris</option>
@@ -155,21 +161,23 @@ $staf_list = $conn->query("SELECT id, nama, username, role, kode_barcode FROM us
                             <option value="ketua kmm sunten">Ketua KMM Sunten</option>
                             <option value="panitia">Panitia</option>
                         </select></div>
-                    <div><label class="block text-sm">Password</label><input type="password" name="password" :placeholder="formAction === 'edit' ? 'Kosongkan jika tidak diubah' : ''" class="mt-1 w-full border-gray-300 rounded-md"></div>
+                    <div><label class="block text-sm">Password</label><input type="password" name="password" :placeholder="formAction === 'edit' ? 'Kosongkan jika tidak diubah' : ''" class="mt-1 w-full border-gray-300 rounded-lg"></div>
                 </div>
-                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Simpan</button></div>
+                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isModalOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button><button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Simpan</button></div>
             </form>
         </div>
     </div>
 
     <!-- Modal Lihat QR Code -->
     <div x-show="isQrCodeModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isQrCodeModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-xs p-6 mx-4 text-center">
-            <h3 class="text-xl font-bold" x-text="`QR Code untuk ${qrCodeName}`"></h3>
+        <div @click.away="isQrCodeModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 mx-4 text-center">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white" x-text="`QR Code untuk ${qrCodeName}`"></h3>
+            </div>
             <div class="my-4 p-4 bg-white">
                 <div id="qrcode-display" class="flex justify-center"></div>
             </div>
-            <button type="button" @click="isQrCodeModalOpen = false" class="mt-6 w-full px-4 py-2 bg-red-600 text-white rounded-md">Tutup</button>
+            <button type="button" @click="isQrCodeModalOpen = false" class="mt-6 w-full px-4 py-2 bg-blue-600 text-white rounded-lg">Tutup</button>
         </div>
     </div>
 </div>

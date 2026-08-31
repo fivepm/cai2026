@@ -25,7 +25,7 @@ if (!function_exists('tanggalIndonesia')) {
 function generateUndanganPdf(string $template_path, array $placeholders, string $output_path): void {
     $html = file_get_contents($template_path);
     // Key yang mengandung path file gambar tidak boleh di-htmlspecialchars
-    $image_keys = ['logo_kmm', 'logo_ldii', 'logo_cai', 'ttd_ketua'];
+    $image_keys = ['logo_kmm', 'logo_ldii', 'logo_cai', 'ttd_ketua', 'baris_topik_materi', 'baris_jadwal', 'baris_materi_row'];
     foreach ($placeholders as $key => $value) {
         $safe = in_array($key, $image_keys) ? $value : htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
         $html = str_replace('{{' . $key . '}}', $safe, $html);
@@ -35,10 +35,10 @@ function generateUndanganPdf(string $template_path, array $placeholders, string 
     $mpdf = new \Mpdf\Mpdf([
         'mode'          => 'utf-8',
         'format'        => 'A4',
-        'margin_left'   => 25.4,
-        'margin_right'  => 25.4,
-        'margin_top'    => 25.4,
-        'margin_bottom' => 25.4,
+        'margin_left'   => 20,
+        'margin_right'  => 20,
+        'margin_top'    => 18,
+        'margin_bottom' => 18,
         'autoScriptToLang' => true,
         'autoLangToFont'   => true,
     ]);
@@ -52,6 +52,19 @@ function generateUndanganPdf(string $template_path, array $placeholders, string 
     }
 
     $mpdf->WriteHTML($html);
+
+    // Gabungkan dengan Rundown Pemateri.pdf
+    $template_dir = dirname($template_path);
+    $rundown_path = $template_dir . '/Rundown Pemateri.pdf';
+    if (file_exists($rundown_path)) {
+        $pagecount = $mpdf->SetSourceFile($rundown_path);
+        for ($i = 1; $i <= $pagecount; $i++) {
+            $mpdf->AddPage();
+            $tplId = $mpdf->ImportPage($i);
+            $mpdf->UseTemplate($tplId);
+        }
+    }
+
     $mpdf->Output($output_path, \Mpdf\Output\Destination::FILE);
 }
 
@@ -62,25 +75,91 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     if ($action === 'buat_undangan') {
         $jenis_undangan = $_POST['jenis_undangan'];
         $nama_pemateri  = $_POST['nama_pemateri'];
-        $topik_materi   = !empty($_POST['topik_materi']) ? $_POST['topik_materi'] : '-';
-        $tanggal_acara  = $_POST['tanggal_acara'];
-        $waktu_acara    = $_POST['waktu_acara'];
         $tanggal_surat  = tanggalIndonesia();
 
         $template_path = realpath(__DIR__ . '/../../../../admin/templates/surat/undangan_pemateri.html');
+        $assets        = realpath(__DIR__ . '/../../../../assets/images/');
 
-        $assets = realpath(__DIR__ . '/../../../../assets/images/');
+        if ($jenis_undangan === 'Makalah CAI') {
+            // --- Makalah CAI: setiap judul punya jadwal sendiri ---
+            $materi_items = [];
+            $judul_all   = $_POST['topik_judul']   ?? [];
+            $enabled_all = $_POST['topik_enabled'] ?? [];
+            $tgl_all     = $_POST['topik_tanggal'] ?? [];
+            $wkt_all     = $_POST['topik_waktu']   ?? [];
+
+            foreach ($judul_all as $i => $judul) {
+                if (isset($enabled_all[$i])) {
+                    $materi_items[] = [
+                        'judul'   => trim($judul),
+                        'tanggal' => $tgl_all[$i] ?? '',
+                        'waktu'   => $wkt_all[$i] ?? '',
+                    ];
+                }
+            }
+
+            $topik_materi  = json_encode($materi_items, JSON_UNESCAPED_UNICODE);
+            $tanggal_acara = null;
+            $waktu_acara   = null;
+
+            // Urutkan berdasarkan tanggal
+            usort($materi_items, fn($a, $b) => strtotime($a['tanggal']) <=> strtotime($b['tanggal']));
+
+            $baris_materi_row = ''; // Makalah CAI: baris Materi dihilangkan
+
+            // Build baris PDF
+            $baris_topik = '';
+            $count_materi = count($materi_items);
+
+            if ($count_materi === 1) {
+                // Satu judul: layout sederhana (judul, tanggal, waktu)
+                $item = $materi_items[0];
+                $tgl  = !empty($item['tanggal']) ? tanggalIndonesia((int)strtotime($item['tanggal'])) : '-';
+                $wkt  = htmlspecialchars($item['waktu'], ENT_QUOTES, 'UTF-8');
+                $baris_topik .= "<tr><td class=\"label\">Judul / Tema</td><td class=\"sep\">:</td><td class=\"val\">" . htmlspecialchars($item['judul'], ENT_QUOTES, 'UTF-8') . "</td></tr>";
+                $baris_topik .= "<tr><td class=\"label\">Tanggal</td><td class=\"sep\">:</td><td class=\"val\">" . $tgl . "</td></tr>";
+                $baris_topik .= "<tr><td class=\"label\">Waktu</td><td class=\"sep\">:</td><td class=\"val\">" . $wkt . "</td></tr>";
+            } else {
+                // Lebih dari satu judul: tiap judul dalam blok sendiri
+                foreach ($materi_items as $i => $item) {
+                    $tgl  = !empty($item['tanggal']) ? tanggalIndonesia((int)strtotime($item['tanggal'])) : '-';
+                    $wkt  = htmlspecialchars($item['waktu'], ENT_QUOTES, 'UTF-8');
+                    // Garis pemisah sebelum blok judul ke-2 dst
+                    if ($i > 0) {
+                        $baris_topik .= "<tr><td colspan='3' style='padding:3pt 0 2pt;'><div style='border-top:1px solid #bbb;margin:0;'></div></td></tr>";
+                    }
+                    // Header judul ke-N (centered, dashes kiri-kanan)
+                    $baris_topik .= "<tr><td colspan='3' style='text-align:center;font-weight:bold;padding:3pt 0 1pt;letter-spacing:0.5pt;'>&mdash;&mdash; Judul " . ($i + 1) . " &mdash;&mdash;</td></tr>";
+                    $baris_topik .= "<tr><td class='label'>Judul / Tema</td><td class='sep'>:</td><td class='val' style='text-align:justify;'>" . htmlspecialchars($item['judul'], ENT_QUOTES, 'UTF-8') . "</td></tr>";
+                    $baris_topik .= "<tr><td class='label'>Tanggal</td><td class='sep'>:</td><td class='val'>" . $tgl . "</td></tr>";
+                    $baris_topik .= "<tr><td class='label'>Waktu</td><td class='sep'>:</td><td class='val'>" . $wkt . "</td></tr>";
+                }
+            }
+            $baris_jadwal = ''; // sudah embedded per materi
+
+        } else {
+            // --- Nasehat: satu jadwal global ---
+            $topik_materi  = '';
+            $tanggal_acara = $_POST['tanggal_acara'] ?? '';
+            $waktu_acara   = $_POST['waktu_acara']   ?? '';
+
+            $baris_topik  = ''; // tidak ada judul
+            $tgl_display  = tanggalIndonesia((int)strtotime($tanggal_acara));
+            $baris_materi_row = "<tr><td class=\"label\">Materi</td><td class=\"sep\">:</td><td class=\"val\">" . htmlspecialchars($jenis_undangan, ENT_QUOTES, 'UTF-8') . "</td></tr>";
+            $baris_jadwal = "<tr><td class=\"label\">Tanggal</td><td class=\"sep\">:</td><td class=\"val\">" . $tgl_display . "</td></tr>"
+                          . "<tr><td class=\"label\">Waktu</td><td class=\"sep\">:</td><td class=\"val\">" . htmlspecialchars($waktu_acara, ENT_QUOTES, 'UTF-8') . "</td></tr>";
+        }
 
         $placeholders = [
-            'nama_pemateri'  => $nama_pemateri,
-            'jenis_undangan' => $jenis_undangan,
-            'topik_materi'   => $topik_materi,
-            'tanggal_acara'  => tanggalIndonesia((int)strtotime($tanggal_acara)),
-            'waktu_acara'    => $waktu_acara,
-            'tanggal_surat'  => $tanggal_surat,
-            'logo_cai'       => $assets . '/Logo 1x1.png',
-            'logo_kmm'       => $assets . '/logo_kmm.png',
-            'ttd_ketua'      => $assets . '/ttd_ketua.png',
+            'nama_pemateri'      => $nama_pemateri,
+            'jenis_undangan'     => $jenis_undangan,
+            'baris_materi_row'   => $baris_materi_row,
+            'baris_topik_materi' => $baris_topik,
+            'baris_jadwal'       => $baris_jadwal,
+            'tanggal_surat'      => $tanggal_surat,
+            'logo_cai'           => $assets . '/Logo 1x1.png',
+            'logo_kmm'           => $assets . '/logo_kmm.png',
+            'ttd_ketua'          => $assets . '/ttd_ketua.png',
         ];
 
         $pdf_filename = 'Undangan-' . preg_replace('/[^a-zA-Z0-9]/', '_', $nama_pemateri) . '_' . time() . '.pdf';
@@ -189,11 +268,21 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
                         </td>
                         <td class="px-5 py-3.5 font-medium text-gray-800"><?php echo htmlspecialchars($undangan['nama_pemateri']); ?></td>
                         <td class="px-5 py-3.5 text-gray-600">
-                            <?php if ($undangan['topik_materi'] == "Membangun Peradaban Hijau: Upaya LDII Dalam Pelestarian Lingkungan Dan Pencapaian Kedaulatan Pangan Untuk Mewujudkan Islam Rahmatan Lil Alamin") {
-                                echo "Materi Organisasi";
+                            <?php
+                            $topik_raw = $undangan['topik_materi'];
+                            $decoded   = json_decode($topik_raw, true);
+                            if (is_array($decoded)) {
+                                $lines = [];
+                                foreach ($decoded as $idx => $item) {
+                                    $lines[] = '<span class="block text-xs text-gray-500 font-medium mb-0.5">Judul ' . ($idx + 1) . '</span><span class="block">' . htmlspecialchars($item['judul']) . '</span>';
+                                }
+                                echo implode('<div class="my-1 border-t border-gray-100"></div>', $lines);
+                            } elseif ($topik_raw === "Membangun Peradaban Hijau: Upaya LDII Dalam Pelestarian Lingkungan Dan Pencapaian Kedaulatan Pangan Untuk Mewujudkan Islam Rahmatan Lil Alamin") {
+                                echo 'Materi Organisasi';
                             } else {
-                                echo htmlspecialchars($undangan['topik_materi']);
-                            } ?>
+                                echo htmlspecialchars($topik_raw);
+                            }
+                            ?>
                         </td>
                         <td class="px-5 py-3.5">
                             <div class="flex items-center gap-3">
@@ -223,11 +312,21 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
                 </div>
                 <h3 class="font-bold text-gray-800 text-lg mb-1"><?php echo htmlspecialchars($undangan['nama_pemateri']); ?></h3>
                 <p class="text-sm text-gray-600 mb-4"><i class="fas fa-book mr-1.5 text-blue-500"></i>
-                    <?php if ($undangan['topik_materi'] == "Membangun Peradaban Hijau: Upaya LDII Dalam Pelestarian Lingkungan Dan Pencapaian Kedaulatan Pangan Untuk Mewujudkan Islam Rahmatan Lil Alamin") {
-                        echo "Materi Organisasi";
+                    <?php
+                    $topik_raw = $undangan['topik_materi'];
+                    $decoded   = json_decode($topik_raw, true);
+                    if (is_array($decoded)) {
+                        $lines = [];
+                        foreach ($decoded as $idx => $item) {
+                            $lines[] = '<span class="font-medium text-gray-500 text-xs">Judul ' . ($idx + 1) . '</span> ' . htmlspecialchars($item['judul']);
+                        }
+                        echo implode('<br>', $lines);
+                    } elseif ($topik_raw === "Membangun Peradaban Hijau: Upaya LDII Dalam Pelestarian Lingkungan Dan Pencapaian Kedaulatan Pangan Untuk Mewujudkan Islam Rahmatan Lil Alamin") {
+                        echo 'Materi Organisasi';
                     } else {
-                        echo htmlspecialchars($undangan['topik_materi']);
-                    } ?>
+                        echo htmlspecialchars($topik_raw);
+                    }
+                    ?>
                 </p>
                 <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
                     <a href="<?php echo $output_dir_web . htmlspecialchars($undangan['nama_file_pdf']); ?>" target="_blank" class="flex-1 flex justify-center items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-semibold text-xs hover:bg-blue-100 transition-colors"><i class="fas fa-eye"></i> Lihat</a>
@@ -258,7 +357,7 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
             </div>
             <!-- Modal Body -->
             <div class="p-6 max-h-[75vh] overflow-y-auto">
-                <form x-data="{ jenisUndanganPilihan: 'Nasehat Pembukaan' }" method="POST" action="sekretaris?page=administrasi/surat_undangan" class="space-y-4" onsubmit="showLoading()">
+                <form x-data="{ jenisUndanganPilihan: 'Nasehat Pembukaan', materiChecked: [false,false,false,false,false,false] }" method="POST" action="sekretaris?page=administrasi/surat_undangan" class="space-y-4" onsubmit="showLoading()">
                     <input type="hidden" name="action" value="buat_undangan">
 
                     <div>
@@ -266,7 +365,6 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
                         <select id="jenis_undangan" name="jenis_undangan" x-model="jenisUndanganPilihan" required class="form-input">
                             <option value="Nasehat Pembukaan">Nasehat Pembukaan</option>
                             <option value="Nasehat Penutupan">Nasehat Penutupan</option>
-                            <option value="Nasehat Shubuh">Nasehat Shubuh</option>
                             <option value="Makalah CAI">Makalah CAI</option>
                         </select>
                     </div>
@@ -276,32 +374,62 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
                         <input type="text" id="nama_pemateri" name="nama_pemateri" required class="form-input" placeholder="Nama lengkap pemateri...">
                     </div>
 
-                    <div x-show="jenisUndanganPilihan === 'Nasehat Penutupan' || jenisUndanganPilihan === 'Nasehat Shubuh'" x-transition>
-                        <label for="topik_materi_text" class="form-label"><i class="fas fa-book-open mr-1 text-blue-500"></i>Tema Materi</label>
-                        <input type="text" id="topik_materi_text" name="topik_materi" :required="jenisUndanganPilihan === 'Nasehat Penutupan' || jenisUndanganPilihan === 'Nasehat Shubuh'" class="form-input" placeholder="Judul / tema materi...">
-                    </div>
-
+                    <!-- Daftar Materi dengan Jadwal Masing-masing (Makalah CAI) -->
                     <div x-show="jenisUndanganPilihan === 'Makalah CAI'" x-transition>
-                        <label for="topik_materi_select" class="form-label"><i class="fas fa-book-open mr-1 text-blue-500"></i>Pilih Judul Makalah</label>
-                        <select id="topik_materi_select" name="topik_materi" :required="jenisUndanganPilihan === 'Makalah CAI'" class="form-input">
-                            <option value="" disabled selected>-- Pilih Judul --</option>
-                            <option value="Menjemput Pertolongan Allah dengan Menolong Agama Allah">Materi 1 : Menjemput Pertolongan Allah dengan Menolong Agama Allah</option>
-                            <option value="Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus">Materi 2 : Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus</option>
-                            <option value="Dampak Perbuatan Maksiat">Materi 3 : Dampak Perbuatan Maksiat</option>
-                            <option value="Mencetak Generus yang Sukses Dunia dan Akhirat">Materi 4 : Mencetak Generus yang Sukses Dunia dan Akhirat</option>
-                            <option value="Meningkatkan Semangat Juang Muballigh-Muballighot">Materi 5 : Meningkatkan Semangat Juang Muballigh-Muballighot</option>
-                            <option value="Wajibnya Menjaga Generus dari Kemaksiatan">Materi 6 : Wajibnya Menjaga Generus dari Kemaksiatan</option>
-                        </select>
+                        <label class="form-label"><i class="fas fa-book-open mr-1 text-blue-500"></i>Pilih Judul Makalah <span class="text-gray-400 font-normal">(centang untuk memilih, lalu isi jadwal)</span></label>
+                        <div class="mt-1 border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+
+                            <?php
+                            $materis = [
+                                0 => 'Menjemput Pertolongan Allah dengan Menolong Agama Allah',
+                                1 => 'Wajibnya Menerampilkan 29 Karakter Luhur sebagai Bekal Sukses Generus',
+                                2 => 'Dampak Perbuatan Maksiat',
+                                3 => 'Mencetak Generus yang Sukses Dunia dan Akhirat',
+                                4 => 'Meningkatkan Semangat Juang Muballigh-Muballighot',
+                                5 => 'Wajibnya Menjaga Generus dari Kemaksiatan',
+                            ];
+                            foreach ($materis as $idx => $judul):
+                            ?>
+                            <div>
+                                <label class="flex items-start gap-3 px-4 py-2.5 hover:bg-blue-50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="topik_enabled[<?php echo $idx; ?>]" value="1"
+                                        x-model="materiChecked[<?php echo $idx; ?>]"
+                                        class="mt-0.5 w-4 h-4 accent-blue-600 cursor-pointer flex-shrink-0">
+                                    <input type="hidden" name="topik_judul[<?php echo $idx; ?>]" value="<?php echo htmlspecialchars($judul); ?>">
+                                    <span class="text-sm text-gray-700 font-medium">Materi <?php echo $idx+1; ?> &mdash; <?php echo htmlspecialchars($judul); ?></span>
+                                </label>
+                                <!-- Sub-form tanggal & waktu (muncul saat dicentang) -->
+                                <div x-show="materiChecked[<?php echo $idx; ?>]" x-transition
+                                    class="px-4 pb-3 pt-1 bg-blue-50 border-t border-blue-100 grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="form-label text-xs text-blue-700"><i class="fas fa-calendar-alt mr-1"></i>Tanggal</label>
+                                        <input type="date" name="topik_tanggal[<?php echo $idx; ?>]"
+                                            :required="materiChecked[<?php echo $idx; ?>]" class="form-input text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="form-label text-xs text-blue-700"><i class="fas fa-clock mr-1"></i>Waktu</label>
+                                        <input type="text" name="topik_waktu[<?php echo $idx; ?>]"
+                                            :required="materiChecked[<?php echo $idx; ?>]"
+                                            placeholder="cth: 09:00 - 11:00 WIB" class="form-input text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+
+                        </div>
+                        <p x-show="!materiChecked.some(v => v)" class="text-xs text-red-500 mt-1"><i class="fas fa-exclamation-circle mr-1"></i>Pilih minimal satu judul makalah</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Tanggal & Waktu Global (hanya untuk Nasehat) -->
+                    <div x-show="jenisUndanganPilihan !== 'Makalah CAI'" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="tanggal_acara" class="form-label"><i class="fas fa-calendar-alt mr-1 text-blue-500"></i>Tanggal Acara</label>
-                            <input type="date" id="tanggal_acara" name="tanggal_acara" required class="form-input">
+                            <input type="date" id="tanggal_acara" name="tanggal_acara" :required="jenisUndanganPilihan !== 'Makalah CAI'" class="form-input">
                         </div>
                         <div>
                             <label for="waktu_acara" class="form-label"><i class="fas fa-clock mr-1 text-blue-500"></i>Waktu Acara</label>
-                            <input type="text" id="waktu_acara" name="waktu_acara" required placeholder="cth: 09:00 - 11:00 WIB" class="form-input">
+                            <input type="text" id="waktu_acara" name="waktu_acara" :required="jenisUndanganPilihan !== 'Makalah CAI'" placeholder="cth: 09:00 - 11:00 WIB" class="form-input">
                         </div>
                     </div>
 

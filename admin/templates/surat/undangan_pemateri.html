@@ -10,7 +10,7 @@
             color: #000;
             margin: 0;
             padding: 0;
-            line-height: 1.3;
+            line-height: 1.25;
         }
 
         .page {
@@ -83,15 +83,15 @@
         }
 
         table.info td.label {
-            width: 32%;
+            width: 20%;
         }
 
         table.info td.sep {
-            width: 5%;
+            width: 4%;
         }
 
         table.info td.val {
-            width: 63%;
+            width: 76%;
         }
 
         /* TANGGAL & TUJUAN */
@@ -109,62 +109,62 @@
         /* BODY */
         .body-surat {
             text-align: justify;
-            line-height: 1.35;
-            margin-bottom: 6px;
+            line-height: 1.3;
+            margin-bottom: 4px;
         }
 
         table.acara {
-            width: 80%;
-            margin: 3px 0 6px 16px;
+            width: 95%;
+            margin: 2px 0 4px 8px;
             border-collapse: collapse;
         }
 
         table.acara td {
-            padding: 1px 0;
+            padding: 0.5px 0;
             vertical-align: top;
             font-size: 11pt;
         }
 
         table.acara td.label {
-            width: 28%;
+            width: 16%;
         }
 
         table.acara td.sep {
-            width: 5%;
+            width: 3%;
         }
 
         table.acara td.val {
-            width: 67%;
+            width: 81%;
         }
 
         table.rincian {
-            width: 80%;
-            margin: 3px 0 6px 16px;
+            width: 95%;
+            margin: 2px 0 4px 8px;
             border-collapse: collapse;
         }
 
         table.rincian td {
-            padding: 1px 0;
+            padding: 0.5px 0;
             vertical-align: top;
             font-size: 11pt;
         }
 
         table.rincian td.label {
-            width: 28%;
+            width: 16%;
         }
 
         table.rincian td.sep {
-            width: 5%;
+            width: 3%;
         }
 
         table.rincian td.val {
-            width: 67%;
+            width: 81%;
         }
 
         .penutup {
-            margin: 6px 0 8px 0;
+            margin: 4px 0 6px 0;
             text-align: justify;
-            line-height: 1.35;
+            line-height: 1.3;
         }
 
         /* TTD */
@@ -223,7 +223,7 @@
             <tr>
                 <td class="label">Lampiran</td>
                 <td class="sep">:</td>
-                <td class="val">-</td>
+                <td class="val">1 Lampiran</td>
             </tr>
             <tr>
                 <td class="label">Hal</td>
@@ -272,30 +272,15 @@
             </tr>
         </table>
 
-        <p class="body-surat">Untuk itu, kami mengajukan permohonan kepada {{nama_pemateri}} sebagai Pemateri pada CAI
+        <p class="body-surat">Untuk itu, kami mengajukan permohonan kepada {{nama_pemateri}} sebagai <strong>Pemateri
+                {{jenis_undangan}}</strong> pada CAI
             XLVII Banguntapan 1 dengan rincian :</p>
 
         <table class="rincian">
-            <tr>
-                <td class="label">Materi</td>
-                <td class="sep">:</td>
-                <td class="val">{{jenis_undangan}}</td>
-            </tr>
-            <tr>
-                <td class="label">Judul / Tema</td>
-                <td class="sep">:</td>
-                <td class="val">{{topik_materi}}</td>
-            </tr>
-            <tr>
-                <td class="label">Tanggal</td>
-                <td class="sep">:</td>
-                <td class="val">{{tanggal_acara}}</td>
-            </tr>
-            <tr>
-                <td class="label">Waktu</td>
-                <td class="sep">:</td>
-                <td class="val">{{waktu_acara}}</td>
-            </tr>
+            {{baris_materi_row}}
+            {{baris_topik_materi}}
+            {{baris_jadwal}}
+
         </table>
 
         <p class="penutup">Apabila terdapat kendala waktu dapat menghubungi nomor 087848248295 (WhatsApp a.n. Sdr.
@@ -311,13 +296,17 @@
         <table class="ttd">
             <tr>
                 <td style="width:60%"></td>
-                <td style="width:40%">Ketua Panitia,</td>
+                <td style="width:40%">Hormat Kami,</td>
             </tr>
             <tr>
                 <td></td>
                 <td style="text-align:center; padding-top:4px;">
                     <img src="{{ttd_ketua}}" alt="TTD Ketua" height="80">
                 </td>
+            </tr>
+            <tr>
+                <td style="width:60%"></td>
+                <td style="width:40%">Ketua Panitia</td>
             </tr>
             <tr>
                 <td></td>

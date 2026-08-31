@@ -147,18 +147,18 @@ $role_user = $_SESSION['user_role'];
         }" @keydown.escape.window="isFilterModalOpen = false" class="flex-1 flex flex-col overflow-hidden">
 
     <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-gray-100">
-        <h1 class="text-center text-3xl font-semibold text-gray-800">Rekapitulasi Pendaftar<br>Desa Banguntapan 1</h1>
+        <h1 class="text-center text-2xl font-bold text-gray-800">Rekapitulasi Pendaftar<br>Desa Banguntapan 1</h1>
 
         <div class="mt-2 flex justify-between items-center">
-            <h1 class="text-3xl font-semibold text-gray-800"></h1>
+            <h1 class="text-2xl font-bold text-gray-800"></h1>
             <div class="flex space-x-4">
-                <button @click="isDetailModalOpen = true" class="no-print px-4 py-2 font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 flex items-center">
+                <button @click="isDetailModalOpen = true" class="no-print px-4 py-2 font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center">
                     <i class="fas fa-chart-pie mr-2"></i>Lihat Detail
                 </button>
-                <button @click="printAttendance()" class="px-3 py-2 text-sm font-semibold text-white bg-gray-600 rounded-md hover:bg-gray-700 flex items-center">
+                <button @click="printAttendance()" class="px-3 py-2 text-sm font-semibold text-white bg-gray-600 rounded-lg hover:bg-gray-700 flex items-center">
                     <i class="fas fa-print mr-2"></i>Cetak
                 </button>
-                <button @click="isFilterModalOpen = true" class="no-print px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 flex items-center">
+                <button @click="isFilterModalOpen = true" class="no-print px-4 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center">
                     <i class="fas fa-filter mr-2"></i>Filter & Cari
                 </button>
             </div>
@@ -221,10 +221,14 @@ $role_user = $_SESSION['user_role'];
         </div>
         <!-- ======================================================= -->
 
-        <div class="mt-6 overflow-hidden bg-white shadow-md rounded-lg">
+        <div class="mt-5 bg-white shadow-md rounded-xl overflow-hidden">
+        <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
+            <i class="fas fa-list text-white text-sm"></i>
+            <span class="text-white font-semibold text-sm">Data Tabel</span>
+        </div>
             <div class="overflow-x-auto">
                 <table class="w-full whitespace-nowrap">
-                    <thead class="bg-gray-200">
+                    <thead class="bg-blue-50 text-blue-800 border-b border-blue-100">
                         <tr class="text-left font-bold">
                             <th class="px-6 py-3">No</th>
                             <th class="px-6 py-3">Nama</th>
@@ -279,17 +283,19 @@ $role_user = $_SESSION['user_role'];
         <!-- TAMBAHKAN KODE MODAL FILTER DI SINI -->
         <!-- ============================================= -->
         <div x-show="isFilterModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-            <div @click.away="isFilterModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
-                <h3 class="text-2xl font-bold mb-4">Filter & Cari Pendaftar</h3>
+            <div @click.away="isFilterModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Filter & Cari Pendaftar</h3>
+            </div>
                 <form action="admin" method="GET" class="space-y-4">
                     <input type="hidden" name="page" value="master/rekap_pendaftar">
                     <div>
                         <label for="search" class="block text-sm font-medium">Cari Nama</label>
-                        <input type="text" id="search" name="search" placeholder="Cari nama..." value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <input type="text" id="search" name="search" placeholder="Cari nama..." value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
                     </div>
                     <div>
                         <label for="kelompok" class="block text-sm font-medium">Filter Kelompok</label>
-                        <select id="kelompok" name="kelompok" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <select id="kelompok" name="kelompok" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
                             <option value="">Semua Kelompok</option>
                             <option value="Bintaran" <?php if ($filter_kelompok == 'Bintaran') echo 'selected'; ?>>Bintaran</option>
                             <option value="Gedongkuning" <?php if ($filter_kelompok == 'Gedongkuning') echo 'selected'; ?>>Gedongkuning</option>
@@ -299,7 +305,7 @@ $role_user = $_SESSION['user_role'];
                     </div>
                     <div>
                         <label for="status" class="block text-sm font-medium">Filter Status</label>
-                        <select id="status" name="status" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <select id="status" name="status" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg">
                             <option value="">Semua Status</option>
                             <option value="hadir" <?php if ($filter_status == 'hadir') echo 'selected'; ?>>Hadir</option>
                             <option value="diterima" <?php if ($filter_status == 'diterima') echo 'selected'; ?>>Izin Diterima</option>
@@ -308,8 +314,8 @@ $role_user = $_SESSION['user_role'];
                         </select>
                     </div>
                     <div class="mt-6 flex justify-end space-x-4">
-                        <button type="button" @click="isFilterModalOpen = false" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Terapkan Filter</button>
+                        <button type="button" @click="isFilterModalOpen = false" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Terapkan Filter</button>
                     </div>
                 </form>
             </div>
@@ -319,11 +325,11 @@ $role_user = $_SESSION['user_role'];
         <!-- KODE BARU: Modal Detail Pendaftar -->
         <!-- ============================================= -->
         <div x-show="isDetailModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
-            <div @click.away="isDetailModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 mx-4">
+            <div @click.away="isDetailModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 mx-4">
                 <h3 class="text-2xl font-bold mb-4 text-center">Ringkasan Pendaftar per Kelompok</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full whitespace-nowrap">
-                        <thead class="bg-gray-200">
+                        <thead class="bg-blue-50 text-blue-800 border-b border-blue-100">
                             <tr class="text-left font-bold">
                                 <th class="px-6 py-3">Kelompok</th>
                                 <th class="px-6 py-3 text-center">Laki-laki</th>
@@ -352,7 +358,7 @@ $role_user = $_SESSION['user_role'];
                     </table>
                 </div>
                 <div class="mt-6 flex justify-end">
-                    <button type="button" @click="isDetailModalOpen = false" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Tutup</button>
+                    <button type="button" @click="isDetailModalOpen = false" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Tutup</button>
                 </div>
             </div>
         </div>
