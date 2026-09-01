@@ -54,13 +54,16 @@ session_start();
     </style>
 </head>
 
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden transition-all duration-300 p-6 sm:p-8">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200/80 border-t-[6px] border-t-blue-600 overflow-hidden transition-all duration-300 p-6 sm:p-8 relative">
 
         <!-- Header -->
         <div class="text-center mb-6">
-            <img src="assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-20 w-auto mb-3 object-contain drop-shadow-sm">
+            <div class="flex justify-center items-center gap-4 mb-3">
+                <img src="assets/images/Logo 1x1.png" alt="Logo CAI" class="h-20 w-auto object-contain drop-shadow-sm">
+                <img src="assets/images/logo_kmm.png" alt="Logo KMM" class="h-20 w-auto object-contain drop-shadow-sm">
+            </div>
             <hr class="mb-3">
             <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Login</h1>
             <p class="text-sm text-slate-500 mt-1">CAI Banguntapan 1 - Tahun 2026</p>
