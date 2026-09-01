@@ -118,9 +118,9 @@ $role_user = $_SESSION['user_role'];
                                                     <button type="submit" name="action" value="batal" class="px-3 py-1 text-sm text-white bg-yellow-500 rounded-md">
                                                         Batalkan Lunas
                                                     </button>
-                                                    <a href="pages/keuangan/cetak_invoice.php?id=<?php echo $p['id']; ?>" target="_blank" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md">
+                                                    <!-- <a href="pages/keuangan/cetak_invoice.php?id=<?php echo $p['id']; ?>" target="_blank" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md">
                                                         <i class="fas fa-print"></i>
-                                                    </a>
+                                                    </a> -->
                                                 <?php else: echo '-';
                                                 endif; ?>
                                             </form>
