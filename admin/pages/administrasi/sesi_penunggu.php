@@ -224,7 +224,7 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
             <!-- Dekorasi Biru Background -->
             <div class="absolute top-0 left-0 w-full h-32 bg-blue-50 -z-10"></div>
             
-            <button @click="isViewModalOpen = false" data-html2canvas-ignore="true" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            
             
             <div class="flex justify-center items-center gap-6">
                 <img src="../assets/images/Logo 1x1.png" alt="Logo Acara" class="h-12 w-auto drop-shadow-md">
@@ -268,7 +268,8 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
     function exportSesiPenungguToJPG(sesiNama) {
         const captureElement = document.getElementById('export-modal-content');
         
-        const closeBtn = captureElement.querySelector('.fa-times').closest('button');
+        const closeIcon = captureElement.querySelector('.fa-times');
+        const closeBtn = closeIcon ? closeIcon.closest('button') : null;
         if (closeBtn) closeBtn.style.display = 'none';
         
         html2canvas(captureElement, {
