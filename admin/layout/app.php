@@ -153,9 +153,9 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
 
                     <!-- Sub-menu yang bisa disembunyikan -->
                     <div x-show="isKeuanganOpen" x-transition class="mt-1 ml-4 space-y-1 border-l-2 border-blue-400 pl-2">
-                        <a href="admin?page=keuangan/log_keuangan" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'keuangan/log_keuangan' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">
+                        <!-- <a href="admin?page=keuangan/log_keuangan" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'keuangan/log_keuangan' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">
                             Log Keuangan
-                        </a>
+                        </a> -->
                         <a href="admin?page=keuangan/validasi_pembayaran" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'keuangan/validasi_pembayaran' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">
                             Validasi Pembayaran
                         </a>

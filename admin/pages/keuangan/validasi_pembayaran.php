@@ -34,12 +34,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $stmt_log->bind_param("sd", $keterangan_log, $jumlah_pembayaran);
         $stmt_log->execute();
         $stmt_log->close();
+        $_SESSION['success_msg'] = "Pembayaran " . $nama_peserta . " berhasil diterima (Lunas).";
     } elseif ($action === 'tolak') {
         // Ubah status menjadi ditolak
         $stmt_update = $conn->prepare("UPDATE peserta SET status_pembayaran = 'ditolak' WHERE id = ?");
         $stmt_update->bind_param("i", $peserta_id);
         $stmt_update->execute();
         $stmt_update->close();
+        $_SESSION['success_msg'] = "Pembayaran " . $nama_peserta . " ditolak.";
     } elseif ($action === 'batal') {
         // 1. Kembalikan status peserta menjadi belum diverifikasi
         $stmt_update = $conn->prepare("UPDATE peserta SET status_pembayaran = 'belum_diverifikasi', dibayar_pada = NULL WHERE id = ?");
@@ -52,33 +54,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $stmt_log->bind_param("s", $keterangan_log);
         $stmt_log->execute();
         $stmt_log->close();
+        $_SESSION['success_msg'] = "Status lunas " . $nama_peserta . " berhasil dibatalkan.";
     }
 
     header("Location: admin?page=keuangan/validasi_pembayaran");
     exit();
 }
 
-$pembayaran_list = $conn->query("SELECT id, nama, kelompok, pakai_tabungan, metode_pembayaran, bukti_pembayaran, status_pembayaran FROM peserta WHERE metode_pembayaran != '' ORDER BY kelompok, nama ASC")->fetch_all(MYSQLI_ASSOC);
+$pembayaran_list = $conn->query("SELECT id, nama, kelompok, metode_pembayaran, status_pembayaran FROM peserta WHERE metode_pembayaran != '' ORDER BY kelompok, nama ASC")->fetch_all(MYSQLI_ASSOC);
 
 $role_user = $_SESSION['user_role'];
 ?>
 
-<div x-data="{ sidebarOpen: false, isBuktiModalOpen: false, buktiUrl: '' }" @keydown.escape.window="isBuktiModalOpen = false" class="flex h-screen bg-gray-200">
+<div x-data="{ sidebarOpen: false }" class="flex h-screen bg-blue-50">
     <!-- Konten Utama -->
     <div class="flex-1 flex flex-col overflow-hidden">
-        <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-gray-100">
-            <h1 class="text-3xl font-semibold text-gray-800">Validasi Pembayaran Peserta</h1>
+        <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-blue-50">
+            <h1 class="text-3xl font-bold text-blue-900">Validasi Pembayaran Peserta</h1>
             <div class="mt-6 overflow-hidden bg-white shadow-md rounded-lg">
                 <div class="overflow-x-auto">
                     <table class="w-full whitespace-nowrap">
-                        <thead class="bg-gray-200">
+                        <thead class="bg-blue-600 text-white">
                             <tr class="text-left font-bold">
                                 <th class="px-6 py-3">No</th>
                                 <th class="px-6 py-3">Nama</th>
                                 <th class="px-6 py-3">Kelompok</th>
-                                <th class="px-6 py-3">Tabungan</th>
                                 <th class="px-6 py-3">Metode Pembayaran</th>
-                                <th class="px-6 py-3">Bukti Bayar</th>
                                 <th class="px-6 py-3">Status</th>
                                 <?php
                                 if ($role_user == 'superadmin') {
@@ -89,34 +90,15 @@ $role_user = $_SESSION['user_role'];
                                 ?>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-gray-100 bg-white">
                             <?php
                             $no = 1;
                             foreach ($pembayaran_list as $p): ?>
-                                <tr>
+                                <tr class="hover:bg-blue-50 transition-colors">
                                     <td class="px-6 py-4"><?php echo $no++; ?></td>
                                     <td class="px-6 py-4"><?php echo htmlspecialchars($p['nama']); ?></td>
                                     <td class="px-6 py-4"><?php echo htmlspecialchars($p['kelompok']); ?></td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 text-xs font-semibold text-white rounded-full <?php echo $p['pakai_tabungan'] == 'yes' ? 'bg-green-500' : 'bg-red-500'; ?>">
-                                            <?php echo ucfirst($p['pakai_tabungan']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4"><?php echo htmlspecialchars($p['metode_pembayaran']); ?></td>
-                                    <td class="px-6 py-4">
-                                        <?php if (empty($p['bukti_pembayaran'])) {
-                                            echo "-";
-                                        } else {
-                                        ?>
-                                            <button @click="isBuktiModalOpen = true; buktiUrl = '<?php echo $upload_dir . htmlspecialchars($p['bukti_pembayaran']); ?>'" class="text-blue-600 hover:underline">
-                                                <i class="fas fa-file-invoice-dollar mr-1"></i>
-                                                Lihat Bukti
-                                            </button>
-                                        <?php
-                                        }
-                                        ?>
-
-                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-700"><?php echo htmlspecialchars($p['metode_pembayaran']); ?></td>
                                     <td class="px-6 py-4">
                                         <span class="px-2 py-1 text-xs font-semibold text-white rounded-full <?php echo $p['status_pembayaran'] == 'lunas' ? 'bg-green-500' : ($p['status_pembayaran'] == 'ditolak' ? 'bg-red-500' : 'bg-yellow-500'); ?>">
                                             <?php echo ucfirst(str_replace('_', ' ', $p['status_pembayaran'])); ?>
@@ -155,11 +137,33 @@ $role_user = $_SESSION['user_role'];
         </main>
     </div>
 
-    <!-- Modal Lihat Bukti Pembayaran -->
-    <div x-show="isBuktiModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isBuktiModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-xl p-4 mx-4 relative">
-            <button @click="isBuktiModalOpen = false" class="absolute -top-3 -right-3 bg-red-600 text-white rounded-full h-8 w-8 flex items-center justify-center">&times;</button>
-            <img :src="buktiUrl" alt="Bukti Pembayaran" class="w-full h-auto max-h-[80vh] object-contain">
-        </div>
-    </div>
+
 </div>
+<?php if (isset($_SESSION['success_msg']) || isset($_SESSION['error_msg'])): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (isset($_SESSION['success_msg'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: '<?php echo addslashes($_SESSION['success_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['success_msg']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_msg'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: '<?php echo addslashes($_SESSION['error_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['error_msg']); ?>
+        <?php endif; ?>
+    });
+</script>
+<?php endif; ?>
