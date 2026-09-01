@@ -454,3 +454,32 @@ $undangan_list = $conn->query("SELECT * FROM surat_undangan ORDER BY dibuat_pada
     </div>
 
 </div>
+
+<?php if (isset($_SESSION['success_msg']) || isset($_SESSION['error_msg'])): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (isset($_SESSION['success_msg'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: '<?php echo addslashes($_SESSION['success_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['success_msg']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_msg'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: '<?php echo addslashes($_SESSION['error_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['error_msg']); ?>
+        <?php endif; ?>
+    });
+</script>
+<?php endif; ?>

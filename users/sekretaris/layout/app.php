@@ -187,7 +187,7 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                 </div>
 
                 <!-- Menu Peserta -->
-                <!-- <div>
+                <div>
                     <button @click="isPesertaOpen = !isPesertaOpen" class="w-full flex items-center justify-between px-4 py-2.5 text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-150 rounded-md">
                         <div class="flex items-center">
                             <i class="fa-solid fa-user w-6"></i>
@@ -197,9 +197,10 @@ $isPesertaPage = strpos($current_page, 'peserta/') === 0;
                     </button>
                     <div x-show="isPesertaOpen" x-transition class="mt-1 ml-4 space-y-1 border-l-2 border-blue-400 pl-2">
                         <a href="sekretaris?page=peserta/tambah_peserta" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'peserta/tambah_peserta' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Tambah Peserta</a>
+                        <a href="sekretaris?page=peserta/manajemen_peserta" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'peserta/manajemen_peserta' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Daftar Peserta</a>
                         <a href="sekretaris?page=peserta/registrasi_ulang" class="block px-3 py-2 rounded-md text-sm transition-colors duration-150 <?php echo $current_page == 'peserta/registrasi_ulang' ? 'bg-blue-800 text-white font-semibold' : 'text-blue-100 hover:bg-blue-700/70 hover:text-white'; ?>">Registrasi Ulang</a>
                     </div>
-                </div> -->
+                </div>
 
                 <!-- Menu Presensi -->
                  <div>

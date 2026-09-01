@@ -15,12 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $nama = $_POST['nama'];
         $kelompok = $_POST['kelompok'];
         $jenis_kelamin = $_POST['jenis_kelamin'];
-        $pakai_tabungan = isset($_POST['pakai_tabungan']) ? 'yes' : 'no';
         $metode_pembayaran = $_POST['metode_pembayaran'];
         $status_pembayaran = $_POST['status_pembayaran'];
+        $ukuran_jersey = $_POST['ukuran_jersey'] ?? null;
 
-        $stmt = $conn->prepare("UPDATE peserta SET nama=?, kelompok=?, jenis_kelamin=?, pakai_tabungan=?, metode_pembayaran=?, status_pembayaran=? WHERE id=?");
-        $stmt->bind_param("ssssssi", $nama, $kelompok, $jenis_kelamin, $pakai_tabungan, $metode_pembayaran, $status_pembayaran, $peserta_id);
+        $stmt = $conn->prepare("UPDATE peserta SET nama=?, kelompok=?, jenis_kelamin=?, metode_pembayaran=?, status_pembayaran=?, ukuran_jersey=? WHERE id=?");
+        $stmt->bind_param("ssssssi", $nama, $kelompok, $jenis_kelamin, $metode_pembayaran, $status_pembayaran, $ukuran_jersey, $peserta_id);
         $stmt->execute();
         $stmt->close();
     }
@@ -168,13 +168,12 @@ $role_user = $_SESSION['user_role'];
                         <th class="px-4 py-3">Nama</th>
                         <th class="px-4 py-3">Kelompok</th>
                         <th class="px-4 py-3">JK</th>
+                        <th class="px-4 py-3">Ukuran Jersey</th>
                         <th class="px-4 py-3">Metode Bayar</th>
-                        <th class="px-4 py-3">Tabungan</th>
                         <th class="px-4 py-3">Status Bayar</th>
-                        <th class="px-4 py-3">Bukti</th>
                         <th class="px-4 py-3">QR Code</th>
                         <?php
-                        if ($role_user == 'superadmin') {
+                        if ($role_user == 'sekretaris') {
                         ?>
                             <th class="px-4 py-3">Aksi</th>
                         <?php
@@ -191,22 +190,19 @@ $role_user = $_SESSION['user_role'];
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['nama']); ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['kelompok']); ?></td>
                             <td class="px-4 py-2"><?php echo substr($peserta['jenis_kelamin'], 0, 1); ?></td>
+                            <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['ukuran_jersey'] ?? '-'); ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['metode_pembayaran']); ?></td>
-                            <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['pakai_tabungan']); ?></td>
                             <td class="px-4 py-2"><span class="px-2 py-1 text-xs font-semibold text-white rounded-full <?php echo $peserta['status_pembayaran'] == 'lunas' ? 'bg-green-500' : ($peserta['status_pembayaran'] == 'ditolak' ? 'bg-red-500' : 'bg-yellow-500'); ?>"><?php echo ucfirst(str_replace('_', ' ', $peserta['status_pembayaran'])); ?></span></td>
-                            <td class="px-4 py-2 text-center">
-                                <?php
-                                if ($peserta['bukti_pembayaran']): ?>
-                                    <button @click="isBuktiModalOpen = true; buktiUrl = '<?php echo $upload_dir . htmlspecialchars($peserta['bukti_pembayaran']); ?>'" class="text-blue-600">
-                                        <i class="fas fa-receipt"></i>
-                                    </button>
-                                <?php else: echo '-';
-                                endif; ?>
-                            </td>
                             <td class="px-4 py-2 text-sm">
                                 <button @click="showQrCode('<?php echo htmlspecialchars($peserta['barcode']); ?>', '<?php echo htmlspecialchars($peserta['nama'], ENT_QUOTES); ?>')" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 mr-2"><i class="fas fa-qrcode"></i></button>
                                 <button @click="downloadQrCode('<?php echo htmlspecialchars($peserta['barcode']); ?>', `qrcode-<?php echo htmlspecialchars($peserta['nama']); ?>.png`)" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-download"></i></button>
                             </td>
+                            <?php if ($role_user == 'sekretaris'): ?>
+                            <td class="px-4 py-2">
+                                <button @click="isEditModalOpen = true; editData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-pencil-alt"></i></button>
+                                <button @click="isDeleteModalOpen = true; deleteData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -214,11 +210,63 @@ $role_user = $_SESSION['user_role'];
         </div>
     </div>
 
-    <!-- Modal Lihat Bukti -->
-    <div x-show="isBuktiModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isBuktiModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-xl p-4 mx-4 relative">
-            <button @click="isBuktiModalOpen = false" class="absolute -top-3 -right-3 bg-red-600 text-white rounded-full h-8 w-8">&times;</button>
-            <img :src="buktiUrl" alt="Bukti Pembayaran" class="w-full h-auto max-h-[80vh] object-contain">
+    <!-- Modal Edit -->
+    <div x-show="isEditModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
+        <div @click.away="isEditModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 mx-4">
+            <h3 class="text-xl font-bold mb-4">Edit Peserta</h3>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="peserta_id" :value="editData.id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="editData.nama" required class="mt-1 w-full border-gray-300 rounded-md"></div>
+                    <div><label class="block text-sm">Kelompok</label><select name="kelompok" x-model="editData.kelompok" required class="mt-1 w-full border-gray-300 rounded-md">
+                            <option value="Bintaran">Bintaran</option>
+                            <option value="Gedongkuning">Gedongkuning</option>
+                            <option value="Jombor">Jombor</option>
+                            <option value="Sunten">Sunten</option>
+                        </select></div>
+                    <div><label class="block text-sm">Jenis Kelamin</label><select name="jenis_kelamin" x-model="editData.jenis_kelamin" required class="mt-1 w-full border-gray-300 rounded-md">
+                            <option value="Laki-laki">Laki-laki</option>
+                            <option value="Perempuan">Perempuan</option>
+                        </select></div>
+                    <div><label class="block text-sm">Metode Pembayaran</label><select name="metode_pembayaran" x-model="editData.metode_pembayaran" class="mt-1 w-full border-gray-300 rounded-md">
+                            <option value="Cash">Cash</option>
+                            <option value="Transfer">Transfer</option>
+                        </select></div>
+                    <div><label class="block text-sm">Ukuran Jersey</label><select name="ukuran_jersey" x-model="editData.ukuran_jersey" class="mt-1 w-full border-gray-300 rounded-md">
+                            <option value="">-- Pilih Ukuran --</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="2XL">2XL</option>
+                            <option value="3XL">3XL</option>
+                            <option value="4XL">4XL</option>
+                            <option value="5XL">5XL</option>
+                            <option value="6XL">6XL</option>
+                            <option value="7XL">7XL</option>
+                            <option value="8XL">8XL</option>
+                        </select></div>
+                    <div class="md:col-span-2"><label class="block text-sm">Status Pembayaran</label><select name="status_pembayaran" x-model="editData.status_pembayaran" required class="mt-1 w-full border-gray-300 rounded-md">
+                            <option value="belum_diverifikasi">Belum Diverifikasi</option>
+                            <option value="lunas">Lunas</option>
+                            <option value="ditolak">Ditolak</option>
+                        </select></div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-4"><button type="button" @click="isEditModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Simpan</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Hapus -->
+    <div x-show="isDeleteModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
+        <div @click.away="isDeleteModalOpen = false" class="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+            <h3 class="text-xl font-bold mb-4 text-red-600">Konfirmasi Hapus</h3>
+            <p class="mt-2">Yakin ingin menghapus peserta <strong x-text="deleteData.nama"></strong>?</p>
+            <form method="POST" action="" class="mt-6 flex justify-end space-x-4">
+                <input type="hidden" name="action" value="delete"><input type="hidden" name="peserta_id" :value="deleteData.id">
+                <button type="button" @click="isDeleteModalOpen = false" class="px-4 py-2 bg-gray-200 rounded-md">Batal</button><button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md">Ya, Hapus</button>
+            </form>
         </div>
     </div>
 

@@ -18,7 +18,6 @@ $page = $_GET['page'] ?? 'dashboard';
 $allowed_pages = [
     'dashboard',
     //master
-    'master/manajemen_admin',
     'master/manajemen_peserta',
     'master/print_hadir',
     'master/manajemen_izin',
@@ -32,6 +31,7 @@ $allowed_pages = [
     'presensi/scanner_kehadiran',
     'presensi/log_kehadiran',
     //peserta
+    'peserta/manajemen_peserta',
     'peserta/registrasi_ulang',
     'peserta/tambah_peserta',
     // Tambahkan nama file lain di sini

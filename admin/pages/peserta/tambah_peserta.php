@@ -9,20 +9,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     $kelompok = $_POST['kelompok'];
     $jenis_kelamin = $_POST['jenis_kelamin'];
     $ukuran_jersey = $_POST['ukuran_jersey'] ?? null;
-    $pakai_tabungan = isset($_POST['pakai_tabungan']) ? 'yes' : 'no';
     $metode_pembayaran = $_POST['metode_pembayaran'];
     $status_pembayaran = $_POST['status_pembayaran'];
-    $terima_totebag = isset($_POST['terima_totebag']) ? 'ya' : 'tidak';
     $terima_idcard = isset($_POST['terima_idcard']) ? 'ya' : 'tidak';
 
     $barcode = 'OTS-' . strtoupper(bin2hex(random_bytes(8)));
     $dibayar_pada = ($status_pembayaran === 'lunas') ? date('Y-m-d H:i:s') : null;
 
-    $sql = "INSERT INTO peserta (nama, kelompok, jenis_kelamin, ukuran_jersey, barcode, pakai_tabungan, metode_pembayaran, status_pembayaran, terima_totebag, terima_idcard, dibayar_pada)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO peserta (nama, kelompok, jenis_kelamin, ukuran_jersey, barcode, metode_pembayaran, status_pembayaran, terima_idcard, dibayar_pada)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssssssssss", $nama, $kelompok, $jenis_kelamin, $ukuran_jersey, $barcode, $pakai_tabungan, $metode_pembayaran, $status_pembayaran, $terima_totebag, $terima_idcard, $dibayar_pada);
+    $stmt->bind_param("sssssssss", $nama, $kelompok, $jenis_kelamin, $ukuran_jersey, $barcode, $metode_pembayaran, $status_pembayaran, $terima_idcard, $dibayar_pada);
 
     if ($stmt->execute()) {
         $peserta_id = $stmt->insert_id;
@@ -137,8 +135,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     <!-- HEADER + TOMBOL IMPORT -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-semibold text-gray-800">Tambah Peserta Baru (OTS)</h1>
-            <p class="mt-1 text-gray-600">Gunakan form ini untuk mendaftarkan peserta yang hadir langsung di lokasi acara.</p>
+            <h1 class="text-3xl font-semibold text-gray-800">Tambah Peserta Baru</h1>
+            <p class="mt-1 text-gray-600">Gunakan form ini untuk mendaftarkan peserta yang hadir.</p>
         </div>
         <div class="flex items-center gap-3 flex-shrink-0">
             <!-- Tombol Download Template CSV -->
@@ -162,9 +160,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
 
     <!-- NOTIFIKASI -->
     <?php if (isset($_SESSION['message'])): ?>
-        <div class="my-4 p-4 rounded-md <?php echo $_SESSION['message']['type'] == 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?>">
-            <?php echo htmlspecialchars($_SESSION['message']['text']); ?>
-        </div>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: '<?php echo $_SESSION['message']['type']; ?>',
+                    title: '<?php echo $_SESSION['message']['type'] == 'success' ? 'Berhasil!' : 'Gagal!'; ?>',
+                    text: '<?php echo htmlspecialchars($_SESSION['message']['text'], ENT_QUOTES, 'UTF-8'); ?>',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        </script>
         <?php if (!empty($_SESSION['import_errors'])): ?>
             <div class="mb-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
                 <p class="font-semibold text-yellow-800 mb-2">Detail baris yang gagal diimpor:</p>
@@ -243,31 +250,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
                 <label for="metode_pembayaran" class="block text-sm font-medium text-gray-700">Metode Pembayaran</label>
                 <select id="metode_pembayaran" name="metode_pembayaran" required class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md">
                     <option value="Cash">Cash</option>
-                    <option value="Line Bank">Line Bank</option>
-                    <option value="Dana">Dana</option>
+                    <option value="Transfer">Transfer</option>
                 </select>
             </div>
         </div>
 
-        <!-- Opsi Lain -->
-        <div class="border-t pt-6 space-y-4">
-            <label class="flex items-center">
-                <input type="checkbox" name="pakai_tabungan" class="h-5 w-5 rounded border-gray-300 text-red-600">
-                <span class="ml-3 text-gray-700">Menggunakan Tabungan</span>
-            </label>
-            <label class="flex items-center">
-                <input type="checkbox" name="terima_totebag" checked class="h-5 w-5 rounded border-gray-300 text-red-600">
-                <span class="ml-3 text-gray-700">Sudah Menerima Totebag</span>
-            </label>
-            <label class="flex items-center">
-                <input type="checkbox" name="terima_idcard" checked class="h-5 w-5 rounded border-gray-300 text-red-600">
-                <span class="ml-3 text-gray-700">Sudah Menerima ID Card</span>
-            </label>
-        </div>
-
         <!-- Tombol Aksi -->
         <div class="flex justify-end border-t pt-6">
-            <button type="submit" class="px-6 py-3 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700">
+            <button type="submit" class="px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
                 Simpan Peserta
             </button>
         </div>

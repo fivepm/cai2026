@@ -1,7 +1,6 @@
-<?php
-// (File: pages/presensi/log_kehadiran.php)
+﻿<?php
+// (File: admin/pages/presensi/log_kehadiran.php)
 
-// Logika untuk memproses form edit
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'update_kehadiran') {
     $log_id     = $_POST['log_id'];
     $status     = $_POST['status'];
@@ -42,9 +41,9 @@ $where_clauses = [];
 $params = [];
 $types  = '';
 
-if (!empty($filter_sesi))   { $where_clauses[] = "l.id_sesi = ?";   $params[] = $filter_sesi;            $types .= 'i'; }
-if (!empty($filter_status)) { $where_clauses[] = "l.status = ?";    $params[] = $filter_status;          $types .= 's'; }
-if (!empty($search_nama))   { $where_clauses[] = "p.nama LIKE ?";   $params[] = '%'.$search_nama.'%';   $types .= 's'; }
+if (!empty($filter_sesi))   { $where_clauses[] = "l.id_sesi = ?";  $params[] = $filter_sesi;          $types .= 'i'; }
+if (!empty($filter_status)) { $where_clauses[] = "l.status = ?";   $params[] = $filter_status;        $types .= 's'; }
+if (!empty($search_nama))   { $where_clauses[] = "p.nama LIKE ?";  $params[] = '%'.$search_nama.'%'; $types .= 's'; }
 
 $sql_where = !empty($where_clauses) ? 'WHERE ' . implode(' AND ', $where_clauses) : '';
 
@@ -54,7 +53,7 @@ $sql = "SELECT l.id, p.nama, p.kelompok, s.nama_sesi, l.status, l.waktu_presensi
         JOIN peserta p ON l.id_peserta = p.id
         JOIN sesi_presensi s ON l.id_sesi = s.id
         $sql_where
-        ORDER BY s.id, p.nama";
+        ORDER BY s.id, p.kelompok, p.nama";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) { $stmt->bind_param($types, ...$params); }
@@ -163,7 +162,7 @@ $stmt->close();
                 <span class="text-white font-semibold text-sm">Data Kehadiran</span>
             </div>
             <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-                <span id="log-count"><?php echo count($log_data); ?></span> data
+                <?php echo count($log_data); ?> data
             </span>
         </div>
 
@@ -181,7 +180,7 @@ $stmt->close();
                         <th class="px-5 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="desktop-log-table" class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-100">
                     <?php if (empty($log_data)): ?>
                         <tr>
                             <td colspan="7" class="px-5 py-10 text-center text-gray-400">
@@ -210,9 +209,9 @@ $stmt->close();
                                     </span>
                                 </td>
                                 <td class="px-5 py-3.5 text-gray-600">
-                                    <?php echo $log['waktu_presensi'] ? date('d M Y, H:i:s', strtotime($log['waktu_presensi'])) : '<span class="text-gray-300">—</span>'; ?>
+                                    <?php echo $log['waktu_presensi'] ? date('d M Y, H:i:s', strtotime($log['waktu_presensi'])) : '<span class="text-gray-300">â€”</span>'; ?>
                                 </td>
-                                <td class="px-5 py-3.5 text-gray-600"><?php echo htmlspecialchars($log['keterangan'] ?: '—'); ?></td>
+                                <td class="px-5 py-3.5 text-gray-600"><?php echo htmlspecialchars($log['keterangan'] ?: 'â€”'); ?></td>
                                 <td class="px-5 py-3.5 text-center">
                                     <button @click="openModal(<?php echo htmlspecialchars(json_encode($log)); ?>)"
                                             class="flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition-colors mx-auto">
@@ -227,7 +226,7 @@ $stmt->close();
         </div>
 
         <!-- Mobile Cards -->
-        <div id="mobile-log-cards" class="block md:hidden border-t border-gray-100 divide-y divide-gray-100">
+        <div class="block md:hidden border-t border-gray-100 divide-y divide-gray-100">
             <?php foreach ($log_data as $log): ?>
             <?php
             $badge = match($log['status']) {
@@ -249,7 +248,7 @@ $stmt->close();
                 <p class="text-xs text-gray-500 mb-0.5"><i class="fas fa-calendar-check mr-1 text-blue-400"></i><?php echo htmlspecialchars($log['nama_sesi']); ?></p>
                 <p class="text-xs text-gray-500 mb-3">
                     <i class="fas fa-clock mr-1 text-blue-400"></i>
-                    <?php echo $log['waktu_presensi'] ? date('d M Y, H:i:s', strtotime($log['waktu_presensi'])) : '—'; ?>
+                    <?php echo $log['waktu_presensi'] ? date('d M Y, H:i:s', strtotime($log['waktu_presensi'])) : 'â€”'; ?>
                 </p>
                 <button @click="openModal(<?php echo htmlspecialchars(json_encode($log)); ?>)"
                         class="w-full flex justify-center items-center gap-1.5 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-semibold text-xs hover:bg-blue-100 transition-colors">
@@ -267,12 +266,9 @@ $stmt->close();
     <div x-show="isModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50"
          @keydown.escape.window="isModalOpen = false" x-cloak x-transition>
         <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <!-- Modal Header -->
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="bg-white bg-opacity-20 rounded-lg p-2">
-                        <i class="fas fa-user-check text-white"></i>
-                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-2"><i class="fas fa-user-check text-white"></i></div>
                     <div>
                         <h3 class="text-lg font-bold text-white">Edit Data Kehadiran</h3>
                         <p class="text-blue-100 text-xs">Perbarui status dan keterangan peserta</p>
@@ -280,12 +276,10 @@ $stmt->close();
                 </div>
                 <button @click="isModalOpen = false" class="text-white hover:text-blue-200 text-xl leading-none">&times;</button>
             </div>
-            <!-- Modal Body -->
             <div class="p-6">
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER['REQUEST_URI']); ?>" class="space-y-4">
                     <input type="hidden" name="action" value="update_kehadiran">
                     <input type="hidden" name="log_id" :value="logId">
-
                     <div>
                         <label for="edit_status" class="block text-sm font-semibold text-gray-700 mb-1">
                             <i class="fas fa-circle-half-stroke mr-1 text-blue-500"></i>Status Kehadiran
@@ -306,7 +300,6 @@ $stmt->close();
                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                   placeholder="Tambahkan keterangan..."></textarea>
                     </div>
-
                     <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <button type="button" @click="isModalOpen = false"
                                 class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium transition-colors">
@@ -323,35 +316,3 @@ $stmt->close();
     </div>
 
 </div>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        setInterval(() => {
-            const modalEl = document.querySelector("[x-show=\"isModalOpen\"]");
-            const isModalOpen = modalEl && modalEl.style.display !== "none";
-            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
-            
-            if (!isModalOpen && !isSearching) {
-                const url = window.location.href;
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, "text/html");
-                        
-                        const newDesktop = doc.getElementById("desktop-log-table");
-                        const oldDesktop = document.getElementById("desktop-log-table");
-                        if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
-                        
-                        const newMobile = doc.getElementById("mobile-log-cards");
-                        const oldMobile = document.getElementById("mobile-log-cards");
-                        if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
-
-                        const newCount = doc.getElementById("log-count");
-                        const oldCount = document.getElementById("log-count");
-                        if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
-                    })
-                    .catch(error => console.error("Error fetching updates:", error));
-            }
-        }, 2000);
-    });
-</script>

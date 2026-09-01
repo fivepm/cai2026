@@ -2,13 +2,27 @@
 // (File: sekretaris/pages/presensi/scanner_kehadiran.php)
 
 $sesi_list = [];
-$result_sesi_list = $conn->query("SELECT id, nama_sesi FROM sesi_presensi ORDER BY nama_sesi");
+date_default_timezone_set('Asia/Jakarta');
+$result_sesi_list = $conn->query("SELECT id, nama_sesi, tanggal_sesi, waktu_sesi FROM sesi_presensi ORDER BY nama_sesi");
 if ($result_sesi_list) {
     while ($row = $result_sesi_list->fetch_assoc()) {
+        $waktu_clean = str_replace('.', ':', $row['waktu_sesi']);
+        $waktu_parts = explode('-', $waktu_clean);
+        $start_time = trim($waktu_parts[0]);
+        $start_time = preg_replace('/[^0-9:]/', '', $start_time);
+        
+        $row['start_timestamp'] = 0;
+        if (strlen($start_time) >= 4) {
+            $start_datetime_str = $row['tanggal_sesi'] . ' ' . $start_time . ':00';
+            $row['start_timestamp'] = strtotime($start_datetime_str);
+            $row['start_datetime_str'] = date('d M Y, H:i', $row['start_timestamp']);
+        }
         $sesi_list[] = $row;
     }
 }
 ?>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 @keyframes scanCardIn {
@@ -33,6 +47,7 @@ if ($result_sesi_list) {
 <script>
     function scannerKehadiranData() {
         return {
+            sesiData: <?php echo json_encode($sesi_list); ?>,
             sesiTerpilih: '',
             sesiAktif: false,
             namaSesiTerpilih: '',
@@ -93,6 +108,22 @@ if ($result_sesi_list) {
 
             mulaiSesi() {
                 if (!this.sesiTerpilih || !this.selectedCamera) return;
+                
+                const sesi = this.sesiData.find(s => s.id == this.sesiTerpilih);
+                if (sesi && sesi.start_timestamp) {
+                    const now = Math.floor(Date.now() / 1000);
+                    if (now < sesi.start_timestamp) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Belum Mulai',
+                            text: 'Sesi ini belum dimulai. Tunggu hingga ' + sesi.start_datetime_str + ' WIB.',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'Mengerti'
+                        });
+                        return;
+                    }
+                }
+                
                 const opt = document.querySelector(`#sesi_id option[value='${this.sesiTerpilih}']`);
                 this.namaSesiTerpilih = opt ? opt.textContent : '';
                 this.sesiAktif = true;

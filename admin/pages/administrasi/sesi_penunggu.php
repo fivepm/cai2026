@@ -217,39 +217,101 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
 
     <!-- Modal Tampilan Sesi -->
     <div x-show="isViewModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" x-cloak x-transition>
-        <div @click.away="isViewModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4 relative overflow-hidden">
+        <div @click.away="isViewModalOpen = false" id="export-modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 mx-4 relative overflow-hidden">
             <!-- Dekorasi Biru Background -->
             <div class="absolute top-0 left-0 w-full h-32 bg-blue-50 -z-10"></div>
             
-            <button @click="isViewModalOpen = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            <button @click="isViewModalOpen = false" data-html2canvas-ignore="true" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             
-            <img src="../assets/images/Logo 1x1.png" alt="Logo Acara" class="mx-auto h-16 w-auto drop-shadow-md">
+            <div class="flex justify-center items-center gap-6">
+                <img src="../assets/images/Logo 1x1.png" alt="Logo Acara" class="h-12 w-auto drop-shadow-md">
+                <img src="../assets/images/logo_kmm.png" alt="Logo KMM" class="h-12 w-auto drop-shadow-md">
+            </div>
             
             <div class="text-center mt-4 mb-6">
-                <h3 class="text-xl font-black text-blue-900 tracking-wide">JADWAL PENUNGGU CAI</h3>
+                <h3 class="text-2xl font-black text-blue-900 tracking-wide">JADWAL PENUNGGU CAI</h3>
                 <h4 class="text-lg font-bold text-gray-800 mt-1" x-text="viewSesiData.nama"></h4>
-                <div class="inline-flex items-center gap-3 mt-3 bg-white px-4 py-1.5 rounded-full shadow-sm border border-gray-100 text-sm">
-                    <span class="text-gray-600"><i class="fas fa-calendar-alt text-blue-500 mr-1"></i> <span x-text="viewSesiData.tanggal"></span></span>
-                    <span class="text-gray-300">|</span>
-                    <span class="text-gray-600"><i class="fas fa-clock text-blue-500 mr-1"></i> <span x-text="viewSesiData.waktu"></span></span>
+                <div class="inline-flex flex-col items-center gap-1.5 mt-3 bg-blue-50 px-5 py-2.5 rounded-xl shadow-sm border border-blue-200 text-sm w-4/5">
+                    <span class="text-blue-800 font-bold"><i class="fas fa-calendar-alt text-blue-600 mr-1.5"></i> <span x-text="viewSesiData.tanggal"></span></span>
+                    <div class="w-full h-px bg-blue-200/60 my-0.5"></div>
+                    <span class="text-blue-800 font-bold"><i class="fas fa-clock text-blue-600 mr-1.5"></i> <span x-text="viewSesiData.waktu"></span></span>
                 </div>
             </div>
             
             <div class="mt-6">
-                <h4 class="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-3 text-center border-b pb-2">Daftar Penunggu</h4>
+                <h4 class="font-semibold text-sm text-blue-600 uppercase tracking-wider mb-3 text-center border-b border-blue-100 pb-2">Daftar Penunggu</h4>
                 <ul class="space-y-2">
                     <template x-for="(penunggu, index) in viewSesiData.penunggu">
-                        <li class="flex items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3" x-text="index + 1"></div>
-                            <span class="font-medium text-gray-800" x-text="penunggu || '- Kosong -'"></span>
+                        <li class="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200 shadow-sm">
+                            <div class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-3 shadow-sm" x-text="index + 1"></div>
+                            <span class="font-bold text-blue-900" x-text="penunggu || '- Kosong -'"></span>
                         </li>
                     </template>
                 </ul>
             </div>
             
-            <div class="mt-8 flex justify-center">
-                <button type="button" @click="isViewModalOpen = false" class="px-8 py-2.5 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-colors">Tutup</button>
+            <div class="mt-8 flex justify-center gap-3" data-html2canvas-ignore="true">
+                <button type="button" @click="isViewModalOpen = false" class="px-6 py-2.5 bg-gray-800 text-white font-semibold rounded-lg shadow-md hover:bg-gray-900 transition-colors">Tutup</button>
+                <button type="button" @click="exportSesiPenungguToJPG(viewSesiData.nama)" class="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <i class="fas fa-file-image"></i> Export JPG
+                </button>
             </div>
         </div>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    function exportSesiPenungguToJPG(sesiNama) {
+        const captureElement = document.getElementById('export-modal-content');
+        
+        const closeBtn = captureElement.querySelector('.fa-times').closest('button');
+        if (closeBtn) closeBtn.style.display = 'none';
+        
+        html2canvas(captureElement, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            logging: false
+        }).then(canvas => {
+            if (closeBtn) closeBtn.style.display = '';
+            
+            const link = document.createElement('a');
+            link.download = `Jadwal_Penunggu_${sesiNama || 'Sesi'}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }).catch(err => {
+            if (closeBtn) closeBtn.style.display = '';
+            console.error("Gagal export JPG:", err);
+            alert("Terjadi kesalahan saat mengekspor gambar.");
+        });
+    }
+</script>
+
+<?php if (isset($_SESSION['success_msg']) || isset($_SESSION['error_msg'])): ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (isset($_SESSION['success_msg'])): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: '<?php echo addslashes($_SESSION['success_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['success_msg']); ?>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['error_msg'])): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal!',
+            text: '<?php echo addslashes($_SESSION['error_msg']); ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+        <?php unset($_SESSION['error_msg']); ?>
+        <?php endif; ?>
+    });
+</script>
+<?php endif; ?>

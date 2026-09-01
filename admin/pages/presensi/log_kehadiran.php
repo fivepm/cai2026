@@ -53,7 +53,7 @@ $sql = "SELECT l.id, p.nama, p.kelompok, s.nama_sesi, l.status, l.waktu_presensi
         JOIN peserta p ON l.id_peserta = p.id
         JOIN sesi_presensi s ON l.id_sesi = s.id
         $sql_where
-        ORDER BY s.id, p.kelompok, p.nama";
+        ORDER BY l.waktu_presensi DESC, p.nama ASC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) { $stmt->bind_param($types, ...$params); }
@@ -86,11 +86,18 @@ $stmt->close();
 
     <!-- Notifikasi -->
     <?php if (isset($_SESSION['message'])): ?>
-        <div id="flash-notif" class="mt-4 p-4 rounded-lg flex items-center gap-3 <?php echo $_SESSION['message']['type'] == 'success' ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'; ?>" style="transition:opacity 0.5s ease;">
-            <i class="fas <?php echo $_SESSION['message']['type'] == 'success' ? 'fa-circle-check text-green-500' : 'fa-circle-xmark text-red-500'; ?>"></i>
-            <?php echo htmlspecialchars($_SESSION['message']['text']); ?>
-        </div>
-        <script>setTimeout(()=>{const e=document.getElementById('flash-notif');if(e){e.style.opacity='0';setTimeout(()=>e.remove(),500);}},2000);</script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: '<?php echo $_SESSION['message']['type']; ?>',
+                    title: '<?php echo $_SESSION['message']['type'] == 'success' ? 'Berhasil!' : 'Gagal!'; ?>',
+                    text: '<?php echo htmlspecialchars($_SESSION['message']['text'], ENT_QUOTES, 'UTF-8'); ?>',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        </script>
         <?php unset($_SESSION['message']); ?>
     <?php endif; ?>
 
@@ -155,7 +162,7 @@ $stmt->close();
                 <span class="text-white font-semibold text-sm">Data Kehadiran</span>
             </div>
             <span class="bg-white bg-opacity-20 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
-                <?php echo count($log_data); ?> data
+                <span id="log-count"><?php echo count($log_data); ?></span> data
             </span>
         </div>
 
@@ -173,7 +180,7 @@ $stmt->close();
                         <th class="px-5 py-3 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody id="desktop-log-table" class="divide-y divide-gray-100">
                     <?php if (empty($log_data)): ?>
                         <tr>
                             <td colspan="7" class="px-5 py-10 text-center text-gray-400">
@@ -219,7 +226,7 @@ $stmt->close();
         </div>
 
         <!-- Mobile Cards -->
-        <div class="block md:hidden border-t border-gray-100 divide-y divide-gray-100">
+        <div id="mobile-log-cards" class="block md:hidden border-t border-gray-100 divide-y divide-gray-100">
             <?php foreach ($log_data as $log): ?>
             <?php
             $badge = match($log['status']) {
@@ -309,3 +316,35 @@ $stmt->close();
     </div>
 
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        setInterval(() => {
+            const modalEl = document.querySelector("[x-show=\"isModalOpen\"]");
+            const isModalOpen = modalEl && modalEl.style.display !== "none";
+            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
+            
+            if (!isModalOpen && !isSearching) {
+                const url = window.location.href;
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, "text/html");
+                        
+                        const newDesktop = doc.getElementById("desktop-log-table");
+                        const oldDesktop = document.getElementById("desktop-log-table");
+                        if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
+                        
+                        const newMobile = doc.getElementById("mobile-log-cards");
+                        const oldMobile = document.getElementById("mobile-log-cards");
+                        if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
+
+                        const newCount = doc.getElementById("log-count");
+                        const oldCount = document.getElementById("log-count");
+                        if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+                    })
+                    .catch(error => console.error("Error fetching updates:", error));
+            }
+        }, 2000);
+    });
+</script>

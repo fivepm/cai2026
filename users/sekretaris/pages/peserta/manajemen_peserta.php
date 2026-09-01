@@ -1,11 +1,11 @@
 <?php
-// Izinkan akses hanya untuk superadmin dan admin
-if (!isset($_SESSION['logged_in']) || !in_array($_SESSION['user_role'], ['superadmin', 'admin'])) {
+// Izinkan akses hanya untuk sekretaris
+if (!isset($_SESSION['logged_in']) || !in_array($_SESSION['user_role'], ['sekretaris'])) {
     header("Location: ../../login");
     exit();
 }
 
-$upload_dir = '../uploads/bukti_pembayaran/';
+$upload_dir = '../../uploads/bukti_pembayaran/';
 // Proses Aksi (Edit, Hapus)
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     $action = $_POST['action'];
@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $stmt->close();
     }
 
-    header("Location: admin?page=master/manajemen_peserta");
+    header("Location: sekretaris?page=peserta/manajemen_peserta");
     exit();
 }
 
@@ -175,9 +175,9 @@ $role_user = $_SESSION['user_role'];
     <div class="flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-800">Manajemen Peserta Hadir</h1>
         <div class="flex space-x-2">
-            <button @click="isFilterModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-lg shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-filter mr-2"></i>Filter</button>
-            <button @click="isDetailModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-lg shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-chart-pie mr-2"></i>Ringkasan</button>
-            <button @click="downloadAllQrCodes(allParticipants)" :disabled="isDownloading" class="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 flex items-center">
+            <button @click="isFilterModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-filter mr-2"></i>Filter</button>
+            <button @click="isDetailModalOpen = true" class="px-3 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm hover:bg-gray-50 flex items-center"><i class="fas fa-chart-pie mr-2"></i>Ringkasan</button>
+            <button @click="downloadAllQrCodes(allParticipants)" :disabled="isDownloading" class="px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300 flex items-center">
                 <i class="fas fa-cloud-download-alt mr-2"></i><span x-text="isDownloading ? 'Mengunduh...' : 'Download QR'"></span>
             </button>
         </div>
@@ -201,7 +201,7 @@ $role_user = $_SESSION['user_role'];
                         <th class="px-4 py-3">Status Bayar</th>
                         <th class="px-4 py-3">QR Code</th>
                         <?php
-                        if ($role_user == 'superadmin') {
+                        if ($role_user == 'sekretaris') {
                         ?>
                             <th class="px-4 py-3">Aksi</th>
                         <?php
@@ -213,7 +213,7 @@ $role_user = $_SESSION['user_role'];
                     <?php
                     $no = 1;
                     foreach ($peserta_list as $peserta): ?>
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-blue-50 transition-colors">
                             <td class="px-4 py-2"><?php echo $no++; ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['nama']); ?></td>
                             <td class="px-4 py-2"><?php echo htmlspecialchars($peserta['kelompok']); ?></td>
@@ -225,16 +225,12 @@ $role_user = $_SESSION['user_role'];
                                 <button @click="showQrCode('<?php echo htmlspecialchars($peserta['barcode']); ?>', '<?php echo htmlspecialchars($peserta['nama'], ENT_QUOTES); ?>')" class="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 mr-2"><i class="fas fa-qrcode"></i></button>
                                 <button @click="downloadQrCode('<?php echo htmlspecialchars($peserta['barcode']); ?>', `qrcode-<?php echo htmlspecialchars($peserta['nama']); ?>.png`)" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"><i class="fas fa-download"></i></button>
                             </td>
-                            <?php
-                            if ($role_user == 'superadmin') {
-                            ?>
-                                <td class="px-4 py-2">
-                                    <button @click="isEditModalOpen = true; editData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-pencil-alt"></i></button>
-                                    <button @click="isDeleteModalOpen = true; deleteData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-blue-600 hover:text-blue-800"><i class="fas fa-trash-alt"></i></button>
-                                </td>
-                            <?php
-                            }
-                            ?>
+                            <?php if ($role_user == 'sekretaris'): ?>
+                            <td class="px-4 py-2">
+                                <button @click="isEditModalOpen = true; editData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-indigo-600 hover:text-indigo-800 mr-3"><i class="fas fa-pencil-alt"></i></button>
+                                <button @click="isDeleteModalOpen = true; deleteData = <?php echo htmlspecialchars(json_encode($peserta), ENT_QUOTES, 'UTF-8'); ?>;" class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -252,22 +248,22 @@ $role_user = $_SESSION['user_role'];
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="peserta_id" :value="editData.id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="editData.nama" required class="mt-1 w-full border-gray-300 rounded-lg"></div>
-                    <div><label class="block text-sm">Kelompok</label><select name="kelompok" x-model="editData.kelompok" required class="mt-1 w-full border-gray-300 rounded-lg">
+                    <div><label class="block text-sm">Nama</label><input type="text" name="nama" x-model="editData.nama" required class="mt-1 w-full border-gray-300 rounded-md"></div>
+                    <div><label class="block text-sm">Kelompok</label><select name="kelompok" x-model="editData.kelompok" required class="mt-1 w-full border-gray-300 rounded-md">
                             <option value="Bintaran">Bintaran</option>
                             <option value="Gedongkuning">Gedongkuning</option>
                             <option value="Jombor">Jombor</option>
                             <option value="Sunten">Sunten</option>
                         </select></div>
-                    <div><label class="block text-sm">Jenis Kelamin</label><select name="jenis_kelamin" x-model="editData.jenis_kelamin" required class="mt-1 w-full border-gray-300 rounded-lg">
+                    <div><label class="block text-sm">Jenis Kelamin</label><select name="jenis_kelamin" x-model="editData.jenis_kelamin" required class="mt-1 w-full border-gray-300 rounded-md">
                             <option value="Laki-laki">Laki-laki</option>
                             <option value="Perempuan">Perempuan</option>
                         </select></div>
-                    <div><label class="block text-sm">Metode Pembayaran</label><select name="metode_pembayaran" x-model="editData.metode_pembayaran" class="mt-1 w-full border-gray-300 rounded-lg">
+                    <div><label class="block text-sm">Metode Pembayaran</label><select name="metode_pembayaran" x-model="editData.metode_pembayaran" class="mt-1 w-full border-gray-300 rounded-md">
                             <option value="Cash">Cash</option>
                             <option value="Transfer">Transfer</option>
                         </select></div>
-                    <div><label class="block text-sm">Ukuran Jersey</label><select name="ukuran_jersey" x-model="editData.ukuran_jersey" class="mt-1 w-full border-gray-300 rounded-lg">
+                    <div><label class="block text-sm">Ukuran Jersey</label><select name="ukuran_jersey" x-model="editData.ukuran_jersey" class="mt-1 w-full border-gray-300 rounded-md">
                             <option value="">-- Pilih Ukuran --</option>
                             <option value="S">S</option>
                             <option value="M">M</option>
@@ -281,7 +277,7 @@ $role_user = $_SESSION['user_role'];
                             <option value="7XL">7XL</option>
                             <option value="8XL">8XL</option>
                         </select></div>
-                    <div class="md:col-span-2"><label class="block text-sm">Status Pembayaran</label><select name="status_pembayaran" x-model="editData.status_pembayaran" required class="mt-1 w-full border-gray-300 rounded-lg">
+                    <div class="md:col-span-2"><label class="block text-sm">Status Pembayaran</label><select name="status_pembayaran" x-model="editData.status_pembayaran" required class="mt-1 w-full border-gray-300 rounded-md">
                             <option value="belum_diverifikasi">Belum Diverifikasi</option>
                             <option value="lunas">Lunas</option>
                             <option value="ditolak">Ditolak</option>
@@ -306,24 +302,16 @@ $role_user = $_SESSION['user_role'];
         </div>
     </div>
 
-    <!-- Modal Lihat Bukti -->
-    <div x-show="isBuktiModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" x-cloak>
-        <div @click.away="isBuktiModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-4 mx-4 relative">
-            <button @click="isBuktiModalOpen = false" class="absolute -top-3 -right-3 bg-blue-600 text-white rounded-full h-8 w-8">&times;</button>
-            <img :src="buktiUrl" alt="Bukti Pembayaran" class="w-full h-auto max-h-[80vh] object-contain">
-        </div>
-    </div>
-
-    <!-- Modal Filter, Ringkasan, Lihat QR (tidak ada perubahan) -->
+    <!-- Modal Filter, Ringkasan, Lihat QR -->
     <div x-show="isFilterModalOpen" class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
         <div @click.away="isFilterModalOpen = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
             <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between mb-4">
                 <h3 class="text-lg font-bold text-white">Filter Peserta</h3>
             </div>
-            <form action="admin" method="GET" class="space-y-4">
-                <input type="hidden" name="page" value="master/manajemen_peserta">
-                <div><label class="block text-sm">Cari Nama</label><input type="text" name="search" value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full border-gray-300 rounded-lg"></div>
-                <div><label class="block text-sm">Filter Kelompok</label><select name="kelompok" class="mt-1 w-full border-gray-300 rounded-lg">
+            <form action="sekretaris" method="GET" class="space-y-4">
+                <input type="hidden" name="page" value="peserta/manajemen_peserta">
+                <div><label class="block text-sm">Cari Nama</label><input type="text" name="search" value="<?php echo htmlspecialchars($search_nama); ?>" class="mt-1 w-full border-gray-300 rounded-md"></div>
+                <div><label class="block text-sm">Filter Kelompok</label><select name="kelompok" class="mt-1 w-full border-gray-300 rounded-md">
                         <option value="">Semua Kelompok</option>
                         <option value="Bintaran" <?php if ($filter_kelompok == 'Bintaran') echo 'selected'; ?>>Bintaran</option>
                         <option value="Gedongkuning" <?php if ($filter_kelompok == 'Gedongkuning') echo 'selected'; ?>>Gedongkuning</option>
