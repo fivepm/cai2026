@@ -57,11 +57,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $_SESSION['success_msg'] = "Status lunas " . $nama_peserta . " berhasil dibatalkan.";
     }
 
-    header("Location: admin?page=keuangan/validasi_pembayaran");
+    $redirect_url = "admin?page=keuangan/validasi_pembayaran";
+    $query_params = [];
+    if (!empty($_POST['current_status']) && $_POST['current_status'] !== 'semua') {
+        $query_params['status'] = $_POST['current_status'];
+    }
+    if (!empty($_POST['current_kelompok']) && $_POST['current_kelompok'] !== 'semua') {
+        $query_params['kelompok'] = $_POST['current_kelompok'];
+    }
+    if (!empty($query_params)) {
+        $redirect_url .= "&" . http_build_query($query_params);
+    }
+    if (isset($_POST["scroll_pos"])) { $redirect_url .= "&scroll=" . intval($_POST["scroll_pos"]); }
+    header("Location: " . $redirect_url);
     exit();
 }
 
-$pembayaran_list = $conn->query("SELECT id, nama, kelompok, metode_pembayaran, status_pembayaran FROM peserta WHERE metode_pembayaran != '' ORDER BY kelompok, nama ASC")->fetch_all(MYSQLI_ASSOC);
+$status_filter = $_GET['status'] ?? 'semua';
+$kelompok_filter = $_GET['kelompok'] ?? 'semua';
+
+$query = "SELECT id, nama, kelompok, metode_pembayaran, status_pembayaran FROM peserta WHERE metode_pembayaran != ''";
+if ($status_filter === 'lunas') {
+    $query .= " AND status_pembayaran = 'lunas'";
+} elseif ($status_filter === 'belum_diverifikasi') {
+    $query .= " AND status_pembayaran = 'belum_diverifikasi'";
+}
+if ($kelompok_filter !== 'semua') {
+    $query .= " AND kelompok = '" . $conn->real_escape_string($kelompok_filter) . "'";
+}
+$query .= " ORDER BY kelompok, nama ASC";
+
+$pembayaran_list = $conn->query($query)->fetch_all(MYSQLI_ASSOC);
+
+// Fetch all distinct groups for the filter dropdown
+$kelompoks = $conn->query("SELECT DISTINCT kelompok FROM peserta WHERE kelompok IS NOT NULL AND kelompok != '' ORDER BY kelompok ASC")->fetch_all(MYSQLI_ASSOC);
+
 
 $role_user = $_SESSION['user_role'];
 ?>
@@ -69,22 +99,40 @@ $role_user = $_SESSION['user_role'];
 <div x-data="{ sidebarOpen: false }" class="flex h-screen bg-blue-50">
     <!-- Konten Utama -->
     <div class="flex-1 flex flex-col overflow-hidden">
-        <main class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-blue-50">
-            <h1 class="text-3xl font-bold text-blue-900">Validasi Pembayaran Peserta</h1>
+        <main id="main-content" class="flex-1 p-6 overflow-x-hidden overflow-y-auto bg-blue-50">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-blue-900">Validasi Pembayaran Peserta</h1>
+                <form method="GET" action="admin" class="flex items-center gap-3">
+                    <input type="hidden" name="page" value="keuangan/validasi_pembayaran">
+                    <select name="kelompok" id="kelompok" onchange="this.form.submit()" class="border border-gray-200 rounded-md shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 bg-white px-4 py-2 cursor-pointer font-medium text-gray-700 outline-none hover:border-gray-300 transition-colors min-w-[150px]">
+                        <option value="semua" <?php echo $kelompok_filter == 'semua' ? 'selected' : ''; ?>>Semua Kelompok</option>
+                        <?php foreach ($kelompoks as $k): ?>
+                            <option value="<?php echo htmlspecialchars($k['kelompok']); ?>" <?php echo $kelompok_filter == $k['kelompok'] ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($k['kelompok']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <select name="status" id="status" onchange="this.form.submit()" class="border border-gray-200 rounded-md shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500 bg-white px-4 py-2 cursor-pointer font-medium text-gray-700 outline-none hover:border-gray-300 transition-colors min-w-[150px]">
+                        <option value="semua" <?php echo $status_filter == 'semua' ? 'selected' : ''; ?>>Semua Status</option>
+                        <option value="lunas" <?php echo $status_filter == 'lunas' ? 'selected' : ''; ?>>Sudah Lunas</option>
+                        <option value="belum_diverifikasi" <?php echo $status_filter == 'belum_diverifikasi' ? 'selected' : ''; ?>>Belum Diverifikasi</option>
+                    </select>
+                </form>
+            </div>
             <div class="mt-6 overflow-hidden bg-white shadow-md rounded-lg">
                 <div class="overflow-x-auto">
-                    <table class="w-full whitespace-nowrap">
+                    <table class="w-full whitespace-nowrap table-fixed">
                         <thead class="bg-blue-600 text-white">
                             <tr class="text-left font-bold">
-                                <th class="px-6 py-3">No</th>
-                                <th class="px-6 py-3">Nama</th>
-                                <th class="px-6 py-3">Kelompok</th>
-                                <th class="px-6 py-3">Metode Pembayaran</th>
-                                <th class="px-6 py-3">Status</th>
+                                <th class="px-4 py-3 w-[5%] text-center">No</th>
+                                <th class="px-4 py-3 w-[30%] truncate">Nama</th>
+                                <th class="px-4 py-3 w-[20%] truncate">Kelompok</th>
+                                <th class="px-4 py-3 w-[15%] truncate">Metode Pembayaran</th>
+                                <th class="px-4 py-3 w-[15%] text-center">Status</th>
                                 <?php
                                 if ($role_user == 'superadmin') {
                                 ?>
-                                    <th class="px-6 py-3">Aksi</th>
+                                    <th class="px-4 py-3 w-[15%] text-center">Aksi</th>
                                 <?php
                                 }
                                 ?>
@@ -94,28 +142,31 @@ $role_user = $_SESSION['user_role'];
                             <?php
                             $no = 1;
                             foreach ($pembayaran_list as $p): ?>
-                                <tr class="hover:bg-blue-50 transition-colors">
-                                    <td class="px-6 py-4"><?php echo $no++; ?></td>
-                                    <td class="px-6 py-4"><?php echo htmlspecialchars($p['nama']); ?></td>
-                                    <td class="px-6 py-4"><?php echo htmlspecialchars($p['kelompok']); ?></td>
-                                    <td class="px-6 py-4 font-medium text-gray-700"><?php echo htmlspecialchars($p['metode_pembayaran']); ?></td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 text-xs font-semibold text-white rounded-full <?php echo $p['status_pembayaran'] == 'lunas' ? 'bg-green-500' : ($p['status_pembayaran'] == 'ditolak' ? 'bg-red-500' : 'bg-yellow-500'); ?>">
+                                <tr id="row_<?php echo $p['id']; ?>" class="hover:bg-blue-50 transition-colors">
+                                    <td class="px-4 py-4 text-center text-gray-500 font-medium"><?php echo $no++; ?></td>
+                                    <td class="px-4 py-4 font-semibold text-gray-800 truncate" title="<?php echo htmlspecialchars($p['nama']); ?>"><?php echo htmlspecialchars($p['nama']); ?></td>
+                                    <td class="px-4 py-4 text-gray-600 truncate" title="<?php echo htmlspecialchars($p['kelompok']); ?>"><?php echo htmlspecialchars($p['kelompok']); ?></td>
+                                    <td class="px-4 py-4 font-medium text-gray-700 truncate"><?php echo htmlspecialchars($p['metode_pembayaran']); ?></td>
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="px-3 py-1.5 text-xs font-semibold text-white rounded-md shadow-sm <?php echo $p['status_pembayaran'] == 'lunas' ? 'bg-green-500' : ($p['status_pembayaran'] == 'ditolak' ? 'bg-red-500' : 'bg-yellow-500'); ?>">
                                             <?php echo ucfirst(str_replace('_', ' ', $p['status_pembayaran'])); ?>
                                         </span>
                                     </td>
                                     <?php
                                     if ($role_user == 'superadmin') {
                                     ?>
-                                        <td class="px-6 py-4">
-                                            <form method="POST" class="inline-flex space-x-2">
+                                        <td class="px-4 py-4 text-center">
+                                            <form method="POST" class="inline-flex space-x-2" onsubmit="this.scroll_pos.value = document.getElementById('main-content').scrollTop">
+                                                <input type="hidden" name="scroll_pos" value="0">
                                                 <input type="hidden" name="peserta_id" value="<?php echo $p['id']; ?>">
+                                                <input type="hidden" name="current_status" value="<?php echo htmlspecialchars($status_filter); ?>">
+                                                <input type="hidden" name="current_kelompok" value="<?php echo htmlspecialchars($kelompok_filter); ?>">
                                                 <?php if ($p['status_pembayaran'] == 'belum_diverifikasi'): ?>
-                                                    <button type="submit" name="action" value="terima" class="px-3 py-1 text-sm text-white bg-green-500 rounded-md">
+                                                    <button type="submit" name="action" value="terima" class="px-3 py-1 text-sm text-white bg-green-600 hover:bg-green-700 transition-colors rounded-md font-medium">
                                                         Terima
                                                     </button>
                                                 <?php elseif ($p['status_pembayaran'] == 'lunas'): ?>
-                                                    <button type="submit" name="action" value="batal" class="px-3 py-1 text-sm text-white bg-yellow-500 rounded-md">
+                                                    <button type="submit" name="action" value="batal" class="px-3 py-1 text-sm text-white bg-red-500 hover:bg-red-600 transition-colors rounded-md">
                                                         Batalkan Lunas
                                                     </button>
                                                     <!-- <a href="pages/keuangan/cetak_invoice.php?id=<?php echo $p['id']; ?>" target="_blank" class="px-3 py-1 text-sm text-white bg-blue-500 rounded-md">
@@ -164,6 +215,17 @@ $role_user = $_SESSION['user_role'];
         });
         <?php unset($_SESSION['error_msg']); ?>
         <?php endif; ?>
+    });
+</script>
+<?php endif; ?>
+
+<?php if (isset($_GET['scroll'])): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.scrollTop = <?php echo intval($_GET['scroll']); ?>;
+        }
     });
 </script>
 <?php endif; ?>
