@@ -87,6 +87,9 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
             <?php
             $penunggu_array = json_decode($sesi['nama_penunggu'] ?? '[]', true);
             $tanggal_formatted = !empty($sesi['tanggal_sesi']) ? date('d F Y', strtotime($sesi['tanggal_sesi'])) : 'Tanggal belum diatur';
+            
+            $hari_map = ['Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa', 'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'];
+            $hari_indonesia = !empty($sesi['tanggal_sesi']) ? $hari_map[date('l', strtotime($sesi['tanggal_sesi']))] : '';
             ?>
             <!-- Kartu Sesi (Alpine.js Component) -->
             <div x-data='{
@@ -101,7 +104,7 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
                         <span class="font-semibold text-blue-800 text-sm">Jadwal Penunggu</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button type="button" @click="isViewModalOpen = true; viewSesiData = { nama: '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>', tanggal: '<?php echo $tanggal_formatted; ?>', waktu: '<?php echo htmlspecialchars($sesi['waktu_sesi'], ENT_QUOTES); ?>', penunggu: penunggu };" class="text-blue-500 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-md transition-colors" title="Lihat Jadwal"><i class="fas fa-eye text-sm"></i></button>
+                        <button type="button" @click="isViewModalOpen = true; viewSesiData = { nama: '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>', hari: '<?php echo $hari_indonesia; ?>', tanggal: '<?php echo $tanggal_formatted; ?>', waktu: '<?php echo htmlspecialchars($sesi['waktu_sesi'], ENT_QUOTES); ?>', penunggu: penunggu };" class="text-blue-500 hover:text-blue-700 bg-blue-100 hover:bg-blue-200 p-1.5 rounded-md transition-colors" title="Lihat Jadwal"><i class="fas fa-eye text-sm"></i></button>
                         <button type="button" @click="isDeleteModalOpen = true; deleteSesiId = <?php echo $sesi['id']; ?>; deleteSesiNama = '<?php echo htmlspecialchars($sesi['nama_sesi'], ENT_QUOTES); ?>';" class="text-red-500 hover:text-red-700 bg-red-100 hover:bg-red-200 p-1.5 rounded-md transition-colors" title="Hapus Jadwal"><i class="fas fa-trash-alt text-sm"></i></button>
                     </div>
                 </div>
@@ -229,6 +232,7 @@ $sesi_list = $conn->query("SELECT * FROM sesi_penunggu ORDER BY id ASC")->fetch_
                 <h3 class="text-2xl font-black text-blue-900 tracking-wide">JADWAL PENUNGGU CAI</h3>
                 <h4 class="text-lg font-bold text-gray-800 mt-1" x-text="viewSesiData.nama"></h4>
                 <div class="inline-flex flex-col items-center gap-1.5 mt-3 bg-blue-50 px-5 py-2.5 rounded-xl shadow-sm border border-blue-200 text-sm w-4/5">
+                    <span class="text-blue-900 font-black tracking-widest uppercase text-xs mb-[-4px]" x-show="viewSesiData.hari" x-text="viewSesiData.hari"></span>
                     <span class="text-blue-800 font-bold"><i class="fas fa-calendar-alt text-blue-600 mr-1.5"></i> <span x-text="viewSesiData.tanggal"></span></span>
                     <div class="w-full h-px bg-blue-200/60 my-0.5"></div>
                     <span class="text-blue-800 font-bold"><i class="fas fa-clock text-blue-600 mr-1.5"></i> <span x-text="viewSesiData.waktu"></span></span>
