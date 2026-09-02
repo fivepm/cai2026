@@ -42,6 +42,45 @@ if ($result_sesi_list) {
 .anim-cross1      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.4s  forwards; }
 .anim-cross2      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.58s forwards; }
 .pulse-ring       { animation: pulseRing 1s ease-out infinite; }
+
+/* Fullscreen Styles */
+#scanner-fullscreen-wrapper:fullscreen {
+    background-color: #0f172a;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+#scanner-fullscreen-wrapper:fullscreen .hide-in-fs {
+    display: none !important;
+}
+.fs-only-block, .fs-only-flex {
+    display: none;
+}
+#scanner-fullscreen-wrapper:fullscreen .fs-only-block {
+    display: block !important;
+}
+#scanner-fullscreen-wrapper:fullscreen .fs-only-flex {
+    display: flex !important;
+}
+#scanner-fullscreen-wrapper:fullscreen .standard-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+#scanner-fullscreen-wrapper:fullscreen .clock-widget {
+    transform: scale(1.2);
+    transform-origin: top center;
+    margin-top: 1rem;
+}
+#scanner-fullscreen-wrapper:fullscreen .scanner-container {
+    max-width: 600px;
+    width: 100%;
+}
 </style>
 
 <script>
@@ -51,6 +90,8 @@ if ($result_sesi_list) {
             sesiTerpilih: '',
             sesiAktif: false,
             namaSesiTerpilih: '',
+            waktuSesiTerpilih: '',
+            tanggalSesiTerpilih: '',
             scanResult: { status: '', message: '', visible: false },
             html5QrCode: null,
             _dismissTimer: null,
@@ -126,6 +167,16 @@ if ($result_sesi_list) {
                 
                 const opt = document.querySelector(`#sesi_id option[value='${this.sesiTerpilih}']`);
                 this.namaSesiTerpilih = opt ? opt.textContent : '';
+                this.waktuSesiTerpilih = sesi.waktu_sesi;
+                
+                if(sesi.tanggal_sesi) {
+                   const d = new Date(sesi.tanggal_sesi);
+                   const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                   this.tanggalSesiTerpilih = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+                } else {
+                   this.tanggalSesiTerpilih = '-';
+                }
+
                 this.sesiAktif = true;
                 this.scanResult = { status: '', message: '', visible: false };
                 this.$nextTick(() => { this.startScanner(); });
@@ -163,6 +214,17 @@ if ($result_sesi_list) {
                 }
             },
 
+            toggleFullscreen() {
+                const elem = document.getElementById('scanner-fullscreen-wrapper');
+                if (!document.fullscreenElement) {
+                    elem.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            },
+
             handleScan(barcode) {
                 if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
                 this.scanResult = { status: 'info', message: 'Memproses...', visible: true };
@@ -190,16 +252,28 @@ if ($result_sesi_list) {
     }
 </script>
 
-<div x-data="scannerKehadiranData()">
+<div x-data="scannerKehadiranData()" id="scanner-fullscreen-wrapper" class="w-full relative">
+
 
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 standard-header w-full">
+        <div class="hide-in-fs">
             <h1 class="text-2xl font-bold text-gray-800">Scanner Kehadiran</h1>
             <p class="text-sm text-gray-500 mt-0.5">Scan QR Code peserta untuk mencatat kehadiran</p>
         </div>
+        
+        <!-- Judul Fullscreen (hanya tampil di FS) -->
+        <div class="fs-only-block flex-1 text-center w-full mt-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight drop-shadow-md" x-text="namaSesiTerpilih"></h1>
+            <div class="inline-flex items-center gap-4 px-6 py-2.5 rounded-full bg-blue-900/60 border border-blue-700/50 shadow-inner backdrop-blur-sm">
+                <span class="text-lg text-blue-100 font-medium flex items-center gap-2"><i class="far fa-calendar-alt text-blue-300"></i> <span x-text="tanggalSesiTerpilih"></span></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                <span class="text-lg text-blue-100 font-medium flex items-center gap-2"><i class="far fa-clock text-blue-300"></i> <span x-text="waktuSesiTerpilih"></span></span>
+            </div>
+        </div>
+
         <!-- Widget Jam Real-Time -->
-        <div class="flex-shrink-0 bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg p-4 text-white flex items-center gap-4 min-w-[220px]">
+        <div class="clock-widget flex-shrink-0 bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl shadow-lg p-4 text-white flex items-center gap-4 min-w-[220px]">
             <div class="text-center flex-1">
                 <div id="clock-time" class="text-3xl font-bold tracking-widest tabular-nums leading-none">00:00:00</div>
                 <div id="clock-date" class="text-xs text-blue-200 mt-1 font-medium">—</div>
@@ -332,24 +406,30 @@ if ($result_sesi_list) {
     <!-- ===================================================== -->
     <!-- Tampilan Scanner Aktif                                  -->
     <!-- ===================================================== -->
-    <div x-show="sesiAktif" x-transition x-cloak class="mt-6">
+    <div x-show="sesiAktif" x-transition x-cloak class="mt-6 w-full flex flex-col items-center">
 
         <!-- Info Bar: Sesi + Ganti Sesi -->
-        <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
+        <div class="hide-in-fs w-full max-w-lg flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse inline-block"></span>
                 <span class="text-sm text-gray-700">Sesi Aktif:</span>
                 <span class="font-bold text-blue-700" x-text="namaSesiTerpilih"></span>
             </div>
-            <button @click="gantiSesi"
-                    class="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5">
-                <i class="fas fa-arrow-left"></i> Ganti Sesi
-            </button>
+            <div class="flex items-center gap-2">
+                <button @click="toggleFullscreen"
+                        class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm">
+                    <i class="fas fa-expand"></i> Fullscreen
+                </button>
+                <button @click="gantiSesi"
+                        class="px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+                    <i class="fas fa-arrow-left"></i> Ganti
+                </button>
+            </div>
         </div>
 
         <!-- Pemilih Kamera (tampil hanya jika ada lebih dari 1 kamera) -->
         <div x-show="cameras.length > 1"
-             class="mt-3 flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+             class="hide-in-fs mt-3 flex w-full max-w-lg items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
             <i class="fas fa-camera text-blue-400 text-sm flex-shrink-0"></i>
             <span class="text-xs text-gray-500 flex-shrink-0 font-medium">Kamera:</span>
             <div class="flex-1 relative">
@@ -365,9 +445,9 @@ if ($result_sesi_list) {
         </div>
 
         <!-- Scanner Area -->
-        <div class="max-w-lg mx-auto mt-3">
+        <div class="scanner-container max-w-lg mx-auto mt-3 w-full">
             <div class="bg-white rounded-xl shadow-md overflow-hidden">
-                <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
+                <div class="hide-in-fs bg-blue-600 px-6 py-3 flex items-center gap-2">
                     <i class="fas fa-camera text-white text-sm"></i>
                     <span class="text-white font-semibold text-sm">Kamera Scanner</span>
                 </div>
@@ -432,6 +512,13 @@ if ($result_sesi_list) {
                 <p class="text-xs text-gray-400 mt-2" x-show="scanResult.status !== 'info'">Melanjutkan otomatis...</p>
             </div>
         </template>
+    </div>
+
+    <!-- Exit Fullscreen Button (Scroll ke Bawah) -->
+    <div class="fs-only-flex w-full justify-center mt-[50vh] pb-12">
+        <button @click="toggleFullscreen" class="px-6 py-3 bg-red-900/40 hover:bg-red-600 text-red-200 hover:text-white border border-red-800/50 hover:border-red-500 rounded-xl transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+            <i class="fas fa-compress"></i> Keluar dari Fullscreen
+        </button>
     </div>
 
 </div>

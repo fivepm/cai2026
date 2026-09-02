@@ -64,7 +64,25 @@ if ($result) { while ($row = $result->fetch_assoc()) { $log_data[] = $row; } }
 $stmt->close();
 ?>
 
-<div x-data="{
+<style>
+/* Fullscreen Styles */
+#log-fullscreen-wrapper:fullscreen {
+    background-color: #f3f4f6;
+    padding: 2rem;
+    overflow-y: auto;
+}
+#log-fullscreen-wrapper:fullscreen .hide-in-fs {
+    display: none !important;
+}
+.fs-only-btn {
+    display: none;
+}
+#log-fullscreen-wrapper:fullscreen .fs-only-btn {
+    display: flex !important;
+}
+</style>
+
+<div id="log-fullscreen-wrapper" class="w-full relative" x-data="{
     isModalOpen: false,
     logId: '',
     currentStatus: '',
@@ -74,15 +92,31 @@ $stmt->close();
         this.currentStatus = log.status;
         this.currentKeterangan = log.keterangan || '';
         this.isModalOpen = true;
+    },
+    toggleFullscreen() {
+        const elem = document.getElementById('log-fullscreen-wrapper');
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch(err => console.error(err));
+        } else {
+            document.exitFullscreen();
+        }
     }
 }">
 
+    <!-- Exit Fullscreen Button -->
+    <button @click="toggleFullscreen" class="fs-only-btn fixed top-6 right-6 z-50 px-4 py-2 bg-red-600/90 hover:bg-red-600 text-white rounded-xl shadow-lg transition-all items-center gap-2 cursor-pointer backdrop-blur-sm">
+        <i class="fas fa-compress"></i> Keluar
+    </button>
+
     <!-- Header -->
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center hide-in-fs">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Log Kehadiran Peserta</h1>
             <p class="text-sm text-gray-500 mt-0.5">Pantau dan kelola status kehadiran semua peserta</p>
         </div>
+        <button @click="toggleFullscreen()" class="px-4 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm">
+            <i class="fas fa-expand"></i> Fullscreen
+        </button>
     </div>
 
     <!-- Notifikasi -->
@@ -103,7 +137,7 @@ $stmt->close();
     <?php endif; ?>
 
     <!-- Form Filter -->
-    <div class="mt-5 bg-white rounded-xl shadow-md overflow-hidden">
+    <div class="mt-5 bg-white rounded-xl shadow-md overflow-hidden hide-in-fs">
         <div class="bg-blue-600 px-6 py-3 flex items-center gap-2">
             <i class="fas fa-filter text-white text-sm"></i>
             <span class="text-white font-semibold text-sm">Filter Data</span>
