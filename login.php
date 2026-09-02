@@ -70,9 +70,9 @@ require_once __DIR__ . '/config/config.php';
             <p class="text-sm text-slate-500 mt-1">CAI Banguntapan 1 - Tahun 2026</p>
             
             <?php if (isset($_ENV['APP_ENV']) && strtolower($_ENV['APP_ENV']) === 'local'): ?>
-            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full border border-amber-200">
+            <!-- <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full border border-amber-200">
                 <i class="fas fa-code"></i> Mode Lokal
-            </div>
+            </div> -->
             <?php endif; ?>
         </div>
 
