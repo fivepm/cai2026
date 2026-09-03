@@ -80,28 +80,105 @@ $stmt->close();
 #log-fullscreen-wrapper:fullscreen .fs-only-btn {
     display: flex !important;
 }
+
+/* Animations from scanner */
+@keyframes scanCardIn {
+    from { opacity: 0; transform: scale(0.75); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes drawStroke {
+    to { stroke-dashoffset: 0; }
+}
+.scan-result-card { animation: scanCardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-circle      { stroke-dasharray: 166; stroke-dashoffset: 166; animation: drawStroke 0.5s ease-out 0.05s forwards; }
+.anim-check       { stroke-dasharray: 55;  stroke-dashoffset: 55;  animation: drawStroke 0.35s ease-out 0.45s forwards; }
+.anim-cross1      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.4s  forwards; }
+.anim-cross2      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.58s forwards; }
 </style>
 
-<div id="log-fullscreen-wrapper" class="w-full relative" x-data="{
-    isModalOpen: false,
-    logId: '',
-    currentStatus: '',
-    currentKeterangan: '',
-    openModal(log) {
-        this.logId = log.id;
-        this.currentStatus = log.status;
-        this.currentKeterangan = log.keterangan || '';
-        this.isModalOpen = true;
-    },
-    toggleFullscreen() {
-        const elem = document.getElementById('log-fullscreen-wrapper');
-        if (!document.fullscreenElement) {
-            elem.requestFullscreen().catch(err => console.error(err));
-        } else {
-            document.exitFullscreen();
+<script>
+function logKehadiranData() {
+    return {
+        isModalOpen: false,
+        logId: '',
+        currentStatus: '',
+        currentKeterangan: '',
+        scanResult: { visible: false, status: '', message: '' },
+        _dismissTimer: null,
+        
+        openModal(log) {
+            this.logId = log.id;
+            this.currentStatus = log.status;
+            this.currentKeterangan = log.keterangan || '';
+            this.isModalOpen = true;
+        },
+        toggleFullscreen() {
+            const elem = document.getElementById('log-fullscreen-wrapper');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => console.error(err));
+            } else {
+                document.exitFullscreen();
+            }
+        },
+        triggerAnimation(nama, status, customMessage) {
+            if (this._dismissTimer) { clearTimeout(this._dismissTimer); }
+            
+            let animStatus = 'success';
+            let message = customMessage || `${nama} - ${status}`;
+            
+            if (status === 'Hadir' || status === 'Terlambat' || status === 'Izin' || status === 'success') {
+                animStatus = 'success';
+            } else {
+                animStatus = 'error';
+            }
+            
+            this.scanResult = { visible: true, status: animStatus, message: message };
+            
+            this._dismissTimer = setTimeout(() => {
+                this.scanResult.visible = false;
+                this._dismissTimer = null;
+            }, 3000);
         }
-    }
-}">
+    };
+}
+</script>
+
+<div id="log-fullscreen-wrapper" class="w-full relative" x-data="logKehadiranData()" @trigger-anim.window="triggerAnimation($event.detail.nama, $event.detail.status, $event.detail.message)">
+
+    <!-- Overlay Notifikasi Hasil Scan -->
+    <div x-show="scanResult.visible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+         style="display:none;">
+        <template x-if="scanResult.visible">
+            <div class="scan-result-card bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center">
+                <template x-if="scanResult.status === 'success'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#22c55e" stroke-width="2"/>
+                            <path class="anim-check" d="M14 27l8 8 16-16" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </template>
+                <template x-if="scanResult.status === 'error'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#ef4444" stroke-width="2"/>
+                            <line class="anim-cross1" x1="17" y1="17" x2="35" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                            <line class="anim-cross2" x1="35" y1="17" x2="17" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </template>
+                <p class="font-semibold text-gray-800 text-base leading-snug" x-text="scanResult.message"></p>
+                <p class="text-xs text-gray-400 mt-2">Data diperbarui otomatis</p>
+            </div>
+        </template>
+    </div>
 
     <!-- Exit Fullscreen Button -->
     <button @click="toggleFullscreen" class="fs-only-btn fixed top-6 right-6 z-50 px-4 py-2 bg-red-600/90 hover:bg-red-600 text-white rounded-xl shadow-lg transition-all items-center gap-2 cursor-pointer backdrop-blur-sm">
@@ -359,33 +436,61 @@ $stmt->close();
 </div>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        let lastScanTimestamp = Math.floor(Date.now() / 1000);
+
+        function fetchTableUpdates() {
+            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
+            if (isSearching) return;
+
+            const url = window.location.href;
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, "text/html");
+                    
+                    const newDesktop = doc.getElementById("desktop-log-table");
+                    const oldDesktop = document.getElementById("desktop-log-table");
+                    if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
+                    
+                    const newMobile = doc.getElementById("mobile-log-cards");
+                    const oldMobile = document.getElementById("mobile-log-cards");
+                    if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
+
+                    const newCount = doc.getElementById("log-count");
+                    const oldCount = document.getElementById("log-count");
+                    if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+                })
+                .catch(error => console.error("Error fetching updates:", error));
+        }
+
         setInterval(() => {
             const modalEl = document.querySelector("[x-show=\"isModalOpen\"]");
             const isModalOpen = modalEl && modalEl.style.display !== "none";
-            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
             
-            if (!isModalOpen && !isSearching) {
-                const url = window.location.href;
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, "text/html");
-                        
-                        const newDesktop = doc.getElementById("desktop-log-table");
-                        const oldDesktop = document.getElementById("desktop-log-table");
-                        if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
-                        
-                        const newMobile = doc.getElementById("mobile-log-cards");
-                        const oldMobile = document.getElementById("mobile-log-cards");
-                        if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
-
-                        const newCount = doc.getElementById("log-count");
-                        const oldCount = document.getElementById("log-count");
-                        if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+            if (!isModalOpen) {
+                fetch('../../uploads/latest_scan.json?t=' + Date.now())
+                    .then(response => {
+                        if (response.ok) return response.json();
+                        return null;
                     })
-                    .catch(error => console.error("Error fetching updates:", error));
+                    .then(data => {
+                        if (data && data.timestamp > lastScanTimestamp) {
+                            lastScanTimestamp = data.timestamp;
+                            
+                            window.dispatchEvent(new CustomEvent('trigger-anim', { 
+                                detail: { nama: data.nama, status: data.status, message: data.message } 
+                            }));
+
+                            if (data.status === 'success') {
+                                fetchTableUpdates();
+                            }
+                        }
+                    })
+                    .catch(e => {
+                        // ignore error
+                    });
             }
-        }, 2000);
+        }, 1000);
     });
 </script>

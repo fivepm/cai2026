@@ -462,8 +462,8 @@ function logKehadiranData() {
             const isModalOpen = modalEl && modalEl.style.display !== "none";
             
             if (!isModalOpen) {
-                // Polling file json dengan interval 1 detik untuk menangkap sukses & error instan
-                fetch('pages/presensi/latest_scan.json?t=' + Date.now())
+                // Polling file json dari direktori terpusat
+                fetch('../uploads/latest_scan.json?t=' + Date.now())
                     .then(response => {
                         if (response.ok) return response.json();
                         return null;

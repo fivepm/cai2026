@@ -59,7 +59,14 @@ try {
     $stmt_update->execute();
 
     if ($stmt_update->affected_rows > 0) {
-        echo json_encode(['status' => 'success', 'message' => "{$peserta['nama']} ({$peserta['kelompok']}) berhasil dicatat {$status_presensi}!"]);
+        $message = "{$peserta['nama']} ({$peserta['kelompok']}) berhasil dicatat {$status_presensi}!";
+        file_put_contents(__DIR__ . '/../../../../uploads/latest_scan.json', json_encode([
+            'timestamp' => time(),
+            'status' => 'success',
+            'message' => $message,
+            'nama' => $peserta['nama']
+        ]));
+        echo json_encode(['status' => 'success', 'message' => $message]);
     } else {
         $stmt_cek = $conn->prepare("SELECT status FROM log_presensi WHERE id_peserta = ? AND id_sesi = ?");
         $stmt_cek->bind_param("ii", $peserta['id'], $sesi_id);
@@ -71,7 +78,17 @@ try {
     $stmt_update->close();
 } catch (Exception $e) {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    $error_msg = $e->getMessage();
+    
+    // Tulis juga error ke file json agar log kehadiran bisa menampilkannya
+    file_put_contents(__DIR__ . '/../../../../uploads/latest_scan.json', json_encode([
+        'timestamp' => time(),
+        'status' => 'error',
+        'message' => $error_msg,
+        'nama' => 'Peserta'
+    ]));
+
+    echo json_encode(['status' => 'error', 'message' => $error_msg]);
 }
 
 $conn->close();

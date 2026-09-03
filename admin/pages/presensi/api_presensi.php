@@ -60,7 +60,7 @@ try {
 
     if ($stmt_update->affected_rows > 0) {
         $message = "{$peserta['nama']} ({$peserta['kelompok']}) berhasil dicatat {$status_presensi}!";
-        file_put_contents('latest_scan.json', json_encode([
+        file_put_contents(__DIR__ . '/../../../uploads/latest_scan.json', json_encode([
             'timestamp' => time(),
             'status' => 'success',
             'message' => $message,
@@ -81,7 +81,7 @@ try {
     $error_msg = $e->getMessage();
     
     // Tulis juga error ke file json agar log kehadiran bisa menampilkannya
-    file_put_contents('latest_scan.json', json_encode([
+    file_put_contents(__DIR__ . '/../../../uploads/latest_scan.json', json_encode([
         'timestamp' => time(),
         'status' => 'error',
         'message' => $error_msg,
