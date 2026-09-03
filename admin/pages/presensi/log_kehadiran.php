@@ -79,28 +79,105 @@ $stmt->close();
 #log-fullscreen-wrapper:fullscreen .fs-only-btn {
     display: flex !important;
 }
+
+/* Animations from scanner */
+@keyframes scanCardIn {
+    from { opacity: 0; transform: scale(0.75); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes drawStroke {
+    to { stroke-dashoffset: 0; }
+}
+.scan-result-card { animation: scanCardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+.anim-circle      { stroke-dasharray: 166; stroke-dashoffset: 166; animation: drawStroke 0.5s ease-out 0.05s forwards; }
+.anim-check       { stroke-dasharray: 55;  stroke-dashoffset: 55;  animation: drawStroke 0.35s ease-out 0.45s forwards; }
+.anim-cross1      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.4s  forwards; }
+.anim-cross2      { stroke-dasharray: 30;  stroke-dashoffset: 30;  animation: drawStroke 0.25s ease-out 0.58s forwards; }
 </style>
 
-<div id="log-fullscreen-wrapper" class="w-full relative" x-data="{
-    isModalOpen: false,
-    logId: '',
-    currentStatus: '',
-    currentKeterangan: '',
-    openModal(log) {
-        this.logId = log.id;
-        this.currentStatus = log.status;
-        this.currentKeterangan = log.keterangan || '';
-        this.isModalOpen = true;
-    },
-    toggleFullscreen() {
-        const elem = document.getElementById('log-fullscreen-wrapper');
-        if (!document.fullscreenElement) {
-            elem.requestFullscreen().catch(err => console.error(err));
-        } else {
-            document.exitFullscreen();
+<script>
+function logKehadiranData() {
+    return {
+        isModalOpen: false,
+        logId: '',
+        currentStatus: '',
+        currentKeterangan: '',
+        scanResult: { visible: false, status: '', message: '' },
+        _dismissTimer: null,
+        
+        openModal(log) {
+            this.logId = log.id;
+            this.currentStatus = log.status;
+            this.currentKeterangan = log.keterangan || '';
+            this.isModalOpen = true;
+        },
+        toggleFullscreen() {
+            const elem = document.getElementById('log-fullscreen-wrapper');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => console.error(err));
+            } else {
+                document.exitFullscreen();
+            }
+        },
+        triggerAnimation(nama, status) {
+            if (this._dismissTimer) { clearTimeout(this._dismissTimer); }
+            
+            let animStatus = 'success';
+            let message = `${nama} - ${status}`;
+            
+            if (status === 'Hadir' || status === 'Terlambat' || status === 'Izin') {
+                animStatus = 'success';
+            } else {
+                animStatus = 'error';
+            }
+            
+            this.scanResult = { visible: true, status: animStatus, message: message };
+            
+            this._dismissTimer = setTimeout(() => {
+                this.scanResult.visible = false;
+                this._dismissTimer = null;
+            }, 3000);
         }
-    }
-}">
+    };
+}
+</script>
+
+<div id="log-fullscreen-wrapper" class="w-full relative" x-data="logKehadiranData()" @trigger-anim.window="triggerAnimation($event.detail.nama, $event.detail.status)">
+
+    <!-- Overlay Notifikasi Hasil Scan -->
+    <div x-show="scanResult.visible"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+         style="display:none;">
+        <template x-if="scanResult.visible">
+            <div class="scan-result-card bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center">
+                <template x-if="scanResult.status === 'success'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#22c55e" stroke-width="2"/>
+                            <path class="anim-check" d="M14 27l8 8 16-16" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </template>
+                <template x-if="scanResult.status === 'error'">
+                    <div class="mb-4 flex justify-center">
+                        <svg class="w-20 h-20" viewBox="0 0 52 52" fill="none">
+                            <circle class="anim-circle" cx="26" cy="26" r="25" stroke="#ef4444" stroke-width="2"/>
+                            <line class="anim-cross1" x1="17" y1="17" x2="35" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                            <line class="anim-cross2" x1="35" y1="17" x2="17" y2="35" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </template>
+                <p class="font-semibold text-gray-800 text-base leading-snug" x-text="scanResult.message"></p>
+                <p class="text-xs text-gray-400 mt-2">Data diperbarui otomatis</p>
+            </div>
+        </template>
+    </div>
 
     <!-- Exit Fullscreen Button -->
     <button @click="toggleFullscreen" class="fs-only-btn fixed top-6 right-6 z-50 px-4 py-2 bg-red-600/90 hover:bg-red-600 text-white rounded-xl shadow-lg transition-all items-center gap-2 cursor-pointer backdrop-blur-sm">
@@ -233,7 +310,7 @@ $stmt->close();
                                 default          => 'bg-gray-100 text-gray-600'
                             };
                             ?>
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            <tr class="hover:bg-gray-50 transition-colors" data-log-id="<?php echo $log['id']; ?>" data-status="<?php echo htmlspecialchars($log['status']); ?>" data-nama="<?php echo htmlspecialchars($log['nama']); ?>">
                                 <td class="px-5 py-3.5 font-medium text-gray-800"><?php echo htmlspecialchars($log['nama']); ?></td>
                                 <td class="px-5 py-3.5 text-gray-600"><?php echo htmlspecialchars($log['kelompok']); ?></td>
                                 <td class="px-5 py-3.5 text-gray-600"><?php echo htmlspecialchars($log['nama_sesi']); ?></td>
@@ -352,6 +429,16 @@ $stmt->close();
 </div>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        let lastTopLogId = null;
+        let lastTopStatus = null;
+        
+        // Inisialisasi status log teratas saat halaman pertama kali dimuat
+        const initialTopRow = document.querySelector("#desktop-log-table tr[data-log-id]");
+        if (initialTopRow) {
+            lastTopLogId = initialTopRow.getAttribute("data-log-id");
+            lastTopStatus = initialTopRow.getAttribute("data-status");
+        }
+
         setInterval(() => {
             const modalEl = document.querySelector("[x-show=\"isModalOpen\"]");
             const isModalOpen = modalEl && modalEl.style.display !== "none";
@@ -364,6 +451,29 @@ $stmt->close();
                     .then(html => {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(html, "text/html");
+                        
+                        // Deteksi perubahan pada baris teratas (ada scan baru atau update status)
+                        const newTopRow = doc.querySelector("#desktop-log-table tr[data-log-id]");
+                        if (newTopRow) {
+                            const newLogId = newTopRow.getAttribute("data-log-id");
+                            const newStatus = newTopRow.getAttribute("data-status");
+                            const newNama = newTopRow.getAttribute("data-nama");
+                            
+                            // Cek jika mode fullscreen aktif dan ada perubahan signifikan
+                            if (document.fullscreenElement) {
+                                if (lastTopLogId !== null && (newLogId !== lastTopLogId || (newLogId === lastTopLogId && newStatus !== lastTopStatus))) {
+                                    // Panggil triggerAnimation di Alpine component (karena x-data sekarang function)
+                                    // Hack di Alpine v3: ambil instance data dan eksekusi
+                                    const alpineEl = document.getElementById('log-fullscreen-wrapper');
+                                    // Pastikan menggunakan Alpine._x_dataStack jika perlu, tapi kita coba akses function di dalam scope jika mungkin.
+                                    // Cara mudah mengirim event ke elemen Alpine:
+                                    alpineEl.dispatchEvent(new CustomEvent('trigger-anim', { detail: { nama: newNama, status: newStatus } }));
+                                }
+                            }
+                            
+                            lastTopLogId = newLogId;
+                            lastTopStatus = newStatus;
+                        }
                         
                         const newDesktop = doc.getElementById("desktop-log-table");
                         const oldDesktop = document.getElementById("desktop-log-table");
