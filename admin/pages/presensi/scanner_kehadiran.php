@@ -81,6 +81,9 @@ if ($result_sesi_list) {
     max-width: 600px;
     width: 100%;
 }
+.mirror-video video {
+    transform: scaleX(-1) !important;
+}
 </style>
 
 <script>
@@ -101,6 +104,7 @@ if ($result_sesi_list) {
             selectedCamera: '',
             camerasLoaded: false,
             camerasError: '',
+            isMirrored: false,
 
             // Lifecycle Alpine.js: dipanggil otomatis saat komponen init
             init() {
@@ -368,13 +372,21 @@ if ($result_sesi_list) {
 
                     <!-- Dropdown kamera -->
                     <div x-show="camerasLoaded && !camerasError">
-                        <select x-model="selectedCamera"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                            <template x-for="(cam, idx) in cameras" :key="cam.id">
-                                <option :value="cam.id"
-                                        x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
-                            </template>
-                        </select>
+                        <div class="flex gap-2">
+                            <select x-model="selectedCamera"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                <template x-for="(cam, idx) in cameras" :key="cam.id">
+                                    <option :value="cam.id"
+                                            x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
+                                </template>
+                            </select>
+                            <button @click="isMirrored = !isMirrored" 
+                                    class="px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 focus:outline-none flex items-center justify-center transition-colors shadow-sm"
+                                    :class="{ 'bg-blue-50 text-blue-600 border-blue-300': isMirrored }"
+                                    title="Mirror Kamera">
+                                <i class="fas fa-right-left"></i>
+                            </button>
+                        </div>
                         <p x-show="cameras.length > 1" class="mt-1.5 text-xs text-gray-400">
                             <i class="fas fa-info-circle mr-0.5"></i>
                             <span x-text="cameras.length + ' kamera terdeteksi. Pilih kamera yang ingin digunakan.'"></span>
@@ -427,21 +439,30 @@ if ($result_sesi_list) {
             </div>
         </div>
 
-        <!-- Pemilih Kamera (tampil hanya jika ada lebih dari 1 kamera) -->
-        <div x-show="cameras.length > 1"
-             class="hide-in-fs mt-3 flex w-full max-w-lg items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
-            <i class="fas fa-camera text-blue-400 text-sm flex-shrink-0"></i>
-            <span class="text-xs text-gray-500 flex-shrink-0 font-medium">Kamera:</span>
-            <div class="flex-1 relative">
-                <select x-model="selectedCamera"
-                        class="w-full text-xs font-semibold text-gray-700 bg-transparent border-0 focus:ring-0 cursor-pointer pr-5 appearance-none">
-                    <template x-for="(cam, idx) in cameras" :key="cam.id">
-                        <option :value="cam.id"
-                                x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
-                    </template>
-                </select>
-                <i class="fas fa-chevron-down text-gray-400 text-xs absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <!-- Pemilih Kamera & Toggle Mirror (tampil hanya jika ada lebih dari 1 kamera) -->
+        <div class="hide-in-fs mt-3 flex w-full max-w-lg items-center gap-2">
+            <div x-show="cameras.length > 1"
+                 class="flex-1 flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+                <i class="fas fa-camera text-blue-400 text-sm flex-shrink-0"></i>
+                <span class="text-xs text-gray-500 flex-shrink-0 font-medium">Kamera:</span>
+                <div class="flex-1 relative">
+                    <select x-model="selectedCamera"
+                            class="w-full text-xs font-semibold text-gray-700 bg-transparent border-0 focus:ring-0 cursor-pointer pr-5 appearance-none">
+                        <template x-for="(cam, idx) in cameras" :key="cam.id">
+                            <option :value="cam.id"
+                                    x-text="cam.label ? cam.label : ('Kamera ' + (idx + 1))"></option>
+                        </template>
+                    </select>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                </div>
             </div>
+
+            <button @click="isMirrored = !isMirrored" 
+                    title="Toggle Mirror Kamera"
+                    class="h-[42px] px-4 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                    :class="{ 'text-blue-600 bg-blue-50 border-blue-200': isMirrored, 'w-full': cameras.length <= 1 }">
+                <i class="fas fa-right-left"></i> <span class="text-xs font-semibold">Mirror Kamera</span>
+            </button>
         </div>
 
         <!-- Scanner Area -->
@@ -453,7 +474,7 @@ if ($result_sesi_list) {
                 </div>
                 <div class="p-4">
                     <div class="w-full border-2 border-blue-200 rounded-lg overflow-hidden bg-gray-100">
-                        <div id="reader" class="w-full"></div>
+                        <div id="reader" class="w-full" :class="{ 'mirror-video': isMirrored }"></div>
                     </div>
                 </div>
             </div>
