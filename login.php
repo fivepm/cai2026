@@ -139,7 +139,7 @@ require_once __DIR__ . '/config/config.php';
     </style>
 </head>
 
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+<body class="bg-white sm:bg-slate-50 min-h-screen flex items-center justify-center p-4 sm:p-0">
 
     <!-- Splash Screen -->
     <div id="splash-screen">
@@ -154,7 +154,7 @@ require_once __DIR__ . '/config/config.php';
         <div class="loader"></div>
     </div>
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200/80 border-t-[6px] border-t-blue-600 overflow-hidden transition-all duration-300 p-6 sm:p-8 relative">
+    <div class="w-full max-w-md sm:bg-white sm:rounded-2xl sm:shadow-2xl sm:border sm:border-slate-200/80 sm:border-t-[6px] sm:border-t-blue-600 overflow-hidden transition-all duration-300 p-6 sm:p-8 relative">
 
         <!-- Header -->
         <div class="text-center mb-6">

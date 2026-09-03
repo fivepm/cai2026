@@ -126,9 +126,9 @@ switch ($role_user) {
     </style>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+<body class="bg-white sm:bg-gray-100 flex items-center justify-center min-h-screen font-sans p-4 sm:p-0">
 
-    <div class="w-full max-w-md p-8 space-y-4 bg-white rounded-xl shadow-lg text-center">
+    <div class="w-full max-w-md p-8 space-y-4 sm:bg-white sm:rounded-xl sm:shadow-lg text-center">
 
         <!-- SVG Animasi Centang -->
         <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">

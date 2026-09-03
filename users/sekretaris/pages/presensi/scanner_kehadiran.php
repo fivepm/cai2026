@@ -124,6 +124,16 @@ if ($result_sesi_list) {
                         this.restartWithNewCamera();
                     }
                 });
+
+                document.addEventListener('fullscreenchange', () => {
+                    if (!document.fullscreenElement && this.isScrollLocked) {
+                        this.isScrollLocked = false;
+                        document.body.classList.remove('scroll-locked');
+                        const fsWrapper = document.getElementById('scanner-fullscreen-wrapper');
+                        if (fsWrapper) fsWrapper.classList.remove('scroll-locked');
+                        this.isLockButtonVisible = false;
+                    }
+                });
             },
 
             loadCameras() {
@@ -238,6 +248,7 @@ if ($result_sesi_list) {
             },
 
             showLockButton() {
+                if (!document.fullscreenElement) return;
                 this.isLockButtonVisible = true;
                 if (this._lockBtnTimer) clearTimeout(this._lockBtnTimer);
                 this._lockBtnTimer = setTimeout(() => {
