@@ -119,13 +119,13 @@ function logKehadiranData() {
                 document.exitFullscreen();
             }
         },
-        triggerAnimation(nama, status) {
+        triggerAnimation(nama, status, customMessage) {
             if (this._dismissTimer) { clearTimeout(this._dismissTimer); }
             
             let animStatus = 'success';
-            let message = `${nama} - ${status}`;
+            let message = customMessage || `${nama} - ${status}`;
             
-            if (status === 'Hadir' || status === 'Terlambat' || status === 'Izin') {
+            if (status === 'Hadir' || status === 'Terlambat' || status === 'Izin' || status === 'success') {
                 animStatus = 'success';
             } else {
                 animStatus = 'error';
@@ -142,7 +142,7 @@ function logKehadiranData() {
 }
 </script>
 
-<div id="log-fullscreen-wrapper" class="w-full relative" x-data="logKehadiranData()" @trigger-anim.window="triggerAnimation($event.detail.nama, $event.detail.status)">
+<div id="log-fullscreen-wrapper" class="w-full relative" x-data="logKehadiranData()" @trigger-anim.window="triggerAnimation($event.detail.nama, $event.detail.status, $event.detail.message)">
 
     <!-- Overlay Notifikasi Hasil Scan -->
     <div x-show="scanResult.visible"
@@ -429,61 +429,64 @@ function logKehadiranData() {
 </div>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        let lastTopLogId = null;
-        let lastTopStatus = null;
-        
-        // Inisialisasi status log teratas saat halaman pertama kali dimuat
-        const initialTopRow = document.querySelector("#desktop-log-table tr[data-log-id]");
-        if (initialTopRow) {
-            lastTopLogId = initialTopRow.getAttribute("data-log-id");
-            lastTopStatus = initialTopRow.getAttribute("data-status");
+        let lastScanTimestamp = Math.floor(Date.now() / 1000); // Mulai dari waktu saat ini agar tidak trigger data lama
+
+        function fetchTableUpdates() {
+            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
+            if (isSearching) return;
+
+            const url = window.location.href;
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, "text/html");
+                    
+                    const newDesktop = doc.getElementById("desktop-log-table");
+                    const oldDesktop = document.getElementById("desktop-log-table");
+                    if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
+                    
+                    const newMobile = doc.getElementById("mobile-log-cards");
+                    const oldMobile = document.getElementById("mobile-log-cards");
+                    if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
+
+                    const newCount = doc.getElementById("log-count");
+                    const oldCount = document.getElementById("log-count");
+                    if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+                })
+                .catch(error => console.error("Error fetching updates:", error));
         }
 
         setInterval(() => {
             const modalEl = document.querySelector("[x-show=\"isModalOpen\"]");
             const isModalOpen = modalEl && modalEl.style.display !== "none";
-            const isSearching = document.activeElement === document.getElementById("search") || document.activeElement === document.getElementById("sesi") || document.activeElement === document.getElementById("status");
             
-            if (!isModalOpen && !isSearching) {
-                const url = window.location.href;
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, "text/html");
-                        
-                        // Deteksi perubahan pada baris teratas (ada scan baru atau update status)
-                        const newTopRow = doc.querySelector("#desktop-log-table tr[data-log-id]");
-                        if (newTopRow) {
-                            const newLogId = newTopRow.getAttribute("data-log-id");
-                            const newStatus = newTopRow.getAttribute("data-status");
-                            const newNama = newTopRow.getAttribute("data-nama");
+            if (!isModalOpen) {
+                // Polling file json dengan interval 1 detik untuk menangkap sukses & error instan
+                fetch('pages/presensi/latest_scan.json?t=' + Date.now())
+                    .then(response => {
+                        if (response.ok) return response.json();
+                        return null;
+                    })
+                    .then(data => {
+                        if (data && data.timestamp > lastScanTimestamp) {
+                            lastScanTimestamp = data.timestamp;
                             
                             // Trigger event animasi ke window agar ditangkap Alpine.js
-                            if (lastTopLogId !== null && (newLogId !== lastTopLogId || (newLogId === lastTopLogId && newStatus !== lastTopStatus))) {
-                                window.dispatchEvent(new CustomEvent('trigger-anim', { 
-                                    detail: { nama: newNama, status: newStatus } 
-                                }));
-                            }
-                            
-                            lastTopLogId = newLogId;
-                            lastTopStatus = newStatus;
-                        }
-                        
-                        const newDesktop = doc.getElementById("desktop-log-table");
-                        const oldDesktop = document.getElementById("desktop-log-table");
-                        if (newDesktop && oldDesktop) oldDesktop.innerHTML = newDesktop.innerHTML;
-                        
-                        const newMobile = doc.getElementById("mobile-log-cards");
-                        const oldMobile = document.getElementById("mobile-log-cards");
-                        if (newMobile && oldMobile) oldMobile.innerHTML = newMobile.innerHTML;
+                            window.dispatchEvent(new CustomEvent('trigger-anim', { 
+                                detail: { nama: data.nama, status: data.status, message: data.message } 
+                            }));
 
-                        const newCount = doc.getElementById("log-count");
-                        const oldCount = document.getElementById("log-count");
-                        if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+                            // Perbarui tabel karena ada log baru/berubah (jika error tidak update tabel juga tidak apa-apa, fetch saja)
+                            if (data.status === 'success') {
+                                fetchTableUpdates();
+                            }
+                        }
                     })
-                    .catch(error => console.error("Error fetching updates:", error));
+                    .catch(e => {
+                        // ignore error (contoh file json belum terbuat)
+                    });
             }
-        }, 2000);
+        }, 1000); // Berubah menjadi 1 detik untuk menghilangkan delay
     });
 </script>
