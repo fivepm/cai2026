@@ -11,6 +11,13 @@ require_once __DIR__ . '/config/config.php';
     <title>Login - CAI 2026</title>
     <link rel="icon" type="image/png" href="assets/images/Logo 1x1.png">
 
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="apple-touch-icon" href="assets/images/Logo%201x1.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <!-- 1. Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,10 +59,100 @@ require_once __DIR__ . '/config/config.php';
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease-out, visibility 0.6s ease-out;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .splash-logos {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .splash-logos img {
+            height: 90px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .splash-text {
+            text-align: center;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .splash-text h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .splash-text p {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .loader {
+            margin-top: 2rem;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-logos">
+            <img src="assets/images/Logo 1x1.png" alt="Logo CAI">
+            <img src="assets/images/logo_kmm.png" alt="Logo KMM">
+        </div>
+        <div class="splash-text">
+            <h2>CAI 2026</h2>
+            <p>Memuat Aplikasi...</p>
+        </div>
+        <div class="loader"></div>
+    </div>
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200/80 border-t-[6px] border-t-blue-600 overflow-hidden transition-all duration-300 p-6 sm:p-8 relative">
 
@@ -147,7 +244,30 @@ require_once __DIR__ . '/config/config.php';
     </div>
 
     <script>
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Hide Splash Screen after 1.5 seconds
+            setTimeout(() => {
+                const splashScreen = document.getElementById('splash-screen');
+                if (splashScreen) {
+                    splashScreen.classList.add('hidden');
+                    // Remove from DOM after transition completes
+                    setTimeout(() => splashScreen.remove(), 600);
+                }
+            }, 1500);
+
             const selectionContainer = document.getElementById('selectionContainer');
             const scannerContainer = document.getElementById('scannerContainer');
             const startScannerBtn = document.getElementById('startScannerBtn');
