@@ -84,6 +84,9 @@ if ($result_sesi_list) {
 .mirror-video video {
     transform: scaleX(-1) !important;
 }
+.scroll-locked, #scanner-fullscreen-wrapper.scroll-locked:fullscreen {
+    overflow: hidden !important;
+}
 </style>
 
 <script>
@@ -105,6 +108,11 @@ if ($result_sesi_list) {
             camerasLoaded: false,
             camerasError: '',
             isMirrored: false,
+            
+            // --- State Scroll Lock ---
+            isScrollLocked: false,
+            isLockButtonVisible: false,
+            _lockBtnTimer: null,
 
             // Lifecycle Alpine.js: dipanggil otomatis saat komponen init
             init() {
@@ -229,6 +237,27 @@ if ($result_sesi_list) {
                 }
             },
 
+            showLockButton() {
+                this.isLockButtonVisible = true;
+                if (this._lockBtnTimer) clearTimeout(this._lockBtnTimer);
+                this._lockBtnTimer = setTimeout(() => {
+                    this.isLockButtonVisible = false;
+                }, 3000);
+            },
+
+            toggleScrollLock() {
+                this.isScrollLocked = !this.isScrollLocked;
+                const fsWrapper = document.getElementById('scanner-fullscreen-wrapper');
+                if (this.isScrollLocked) {
+                    document.body.classList.add('scroll-locked');
+                    if (fsWrapper) fsWrapper.classList.add('scroll-locked');
+                } else {
+                    document.body.classList.remove('scroll-locked');
+                    if (fsWrapper) fsWrapper.classList.remove('scroll-locked');
+                }
+                this.showLockButton();
+            },
+
             handleScan(barcode) {
                 if (this._dismissTimer) { clearTimeout(this._dismissTimer); this._dismissTimer = null; }
                 this.scanResult = { status: 'info', message: 'Memproses...', visible: true };
@@ -257,6 +286,28 @@ if ($result_sesi_list) {
 </script>
 
 <div x-data="scannerKehadiranData()" id="scanner-fullscreen-wrapper" class="w-full relative">
+
+    <!-- Area Transparan untuk Memunculkan Tombol Lock -->
+    <div @click="showLockButton()" 
+         class="fixed top-0 right-0 w-24 h-24 z-[60] cursor-pointer"
+         title="Klik di sini untuk memunculkan tombol Scroll Lock"
+         style="opacity: 0;">
+    </div>
+
+    <!-- Tombol Scroll Lock Mengambang -->
+    <button x-show="isLockButtonVisible" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-90"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-90"
+            @click.stop="toggleScrollLock()"
+            class="fixed top-6 right-6 z-[70] px-4 py-2 bg-gray-800/80 hover:bg-gray-700 text-white rounded-xl shadow-lg transition-all flex items-center gap-2 backdrop-blur-sm cursor-pointer"
+            x-cloak>
+        <i class="fas" :class="isScrollLocked ? 'fa-lock text-red-400' : 'fa-unlock text-green-400'"></i>
+        <span class="text-sm font-semibold" x-text="isScrollLocked ? 'Scroll Locked' : 'Scroll Unlocked'"></span>
+    </button>
 
 
     <!-- Header -->
