@@ -14,7 +14,7 @@ require_once __DIR__ . '/config/config.php';
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <link rel="apple-touch-icon" href="assets/images/Logo%20CAI.jpg">
+    <link rel="apple-touch-icon" href="assets/images/Logo_apk_CAI.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 

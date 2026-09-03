@@ -8,13 +8,13 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "assets/images/Logo%20CAI.jpg",
+      "src": "assets/images/Logo_apk_CAI.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "assets/images/Logo%20CAI.jpg",
+      "src": "assets/images/Logo_apk_CAI.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
