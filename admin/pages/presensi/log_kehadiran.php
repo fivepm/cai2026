@@ -459,16 +459,11 @@ function logKehadiranData() {
                             const newStatus = newTopRow.getAttribute("data-status");
                             const newNama = newTopRow.getAttribute("data-nama");
                             
-                            // Cek jika mode fullscreen aktif dan ada perubahan signifikan
-                            if (document.fullscreenElement) {
-                                if (lastTopLogId !== null && (newLogId !== lastTopLogId || (newLogId === lastTopLogId && newStatus !== lastTopStatus))) {
-                                    // Panggil triggerAnimation di Alpine component (karena x-data sekarang function)
-                                    // Hack di Alpine v3: ambil instance data dan eksekusi
-                                    const alpineEl = document.getElementById('log-fullscreen-wrapper');
-                                    // Pastikan menggunakan Alpine._x_dataStack jika perlu, tapi kita coba akses function di dalam scope jika mungkin.
-                                    // Cara mudah mengirim event ke elemen Alpine:
-                                    alpineEl.dispatchEvent(new CustomEvent('trigger-anim', { detail: { nama: newNama, status: newStatus } }));
-                                }
+                            // Trigger event animasi ke window agar ditangkap Alpine.js
+                            if (lastTopLogId !== null && (newLogId !== lastTopLogId || (newLogId === lastTopLogId && newStatus !== lastTopStatus))) {
+                                window.dispatchEvent(new CustomEvent('trigger-anim', { 
+                                    detail: { nama: newNama, status: newStatus } 
+                                }));
                             }
                             
                             lastTopLogId = newLogId;
