@@ -54,7 +54,7 @@ $sql = "SELECT l.id, p.nama, p.kelompok, s.nama_sesi, l.status, l.waktu_presensi
         JOIN peserta p ON l.id_peserta = p.id
         JOIN sesi_presensi s ON l.id_sesi = s.id
         $sql_where
-        ORDER BY s.id, p.nama";
+        ORDER BY l.waktu_presensi DESC, p.nama ASC";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) { $stmt->bind_param($types, ...$params); }
