@@ -9,12 +9,12 @@ require_once __DIR__ . '/config/config.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CAI 2026</title>
-    <link rel="icon" type="image/png" href="assets/images/Logo 1x1.png">
+    <link rel="icon" type="image/jpeg" href="assets/images/Logo%20CAI.jpg">
 
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
-    <link rel="apple-touch-icon" href="assets/images/Logo%201x1.png">
+    <link rel="apple-touch-icon" href="assets/images/Logo%20CAI.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -144,7 +144,7 @@ require_once __DIR__ . '/config/config.php';
     <!-- Splash Screen -->
     <div id="splash-screen">
         <div class="splash-logos">
-            <img src="assets/images/Logo 1x1.png" alt="Logo CAI">
+            <img src="assets/images/Logo%20CAI.jpg" alt="Logo CAI">
             <img src="assets/images/logo_kmm.png" alt="Logo KMM">
         </div>
         <div class="splash-text">
@@ -159,7 +159,7 @@ require_once __DIR__ . '/config/config.php';
         <!-- Header -->
         <div class="text-center mb-6">
             <div class="flex justify-center items-center gap-4 mb-3">
-                <img src="assets/images/Logo 1x1.png" alt="Logo CAI" class="h-20 w-auto object-contain drop-shadow-sm">
+                <img src="assets/images/Logo%20CAI.jpg" alt="Logo CAI" class="h-20 w-auto object-contain drop-shadow-sm rounded-lg">
                 <img src="assets/images/logo_kmm.png" alt="Logo KMM" class="h-20 w-auto object-contain drop-shadow-sm">
             </div>
             <hr class="mb-3">

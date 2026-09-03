@@ -5,7 +5,7 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll([
                 '/login.php',
-                '/assets/images/Logo%201x1.png',
+                '/assets/images/Logo%20CAI.jpg',
                 '/assets/images/logo_kmm.png'
             ]);
         })
