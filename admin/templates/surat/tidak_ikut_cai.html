@@ -1,124 +1,149 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset="UTF-8">
-<style>
-    body {
-        font-family: 'Times New Roman', serif;
-        font-size: 12pt;
-        color: #000;
-        margin: 0;
-        padding: 0;
-    }
-    .page {
-        padding: 0;
-    }
-    h1.judul {
-        text-align: center;
-        font-size: 13pt;
-        font-weight: bold;
-        text-transform: uppercase;
-        text-decoration: underline;
-        margin-bottom: 20px;
-    }
-    .intro {
-        margin-bottom: 12px;
-    }
-    table.biodata {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 16px;
-    }
-    table.biodata td {
-        padding: 3px 0;
-        vertical-align: top;
-        font-size: 12pt;
-    }
-    table.biodata td.label {
-        width: 35%;
-    }
-    table.biodata td.sep {
-        width: 5%;
-    }
-    table.biodata td.val {
-        width: 60%;
-    }
-    .alasan-box {
-        margin: 10px 0 20px 0;
-        min-height: 40px;
-    }
-    .penutup {
-        margin-bottom: 30px;
-    }
-    table.ttd {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-    table.ttd td {
-        vertical-align: top;
-        text-align: center;
-        padding: 0 10px;
-        font-size: 12pt;
-    }
-    .ttd-space {
-        height: 60px;
-    }
-</style>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            padding: 0;
+        }
+
+        h1.judul {
+            text-align: center;
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-decoration: underline;
+            margin-bottom: 20px;
+        }
+
+        .intro {
+            margin-bottom: 12px;
+        }
+
+        table.biodata {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+
+        table.biodata td {
+            padding: 3px 0;
+            vertical-align: top;
+            font-size: 12pt;
+        }
+
+        table.biodata td.label {
+            width: 35%;
+        }
+
+        table.biodata td.sep {
+            width: 5%;
+        }
+
+        table.biodata td.val {
+            width: 60%;
+        }
+
+        .alasan-box {
+            margin: 10px 0 20px 0;
+            min-height: 40px;
+        }
+
+        .penutup {
+            margin-bottom: 30px;
+        }
+
+        table.ttd {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table.ttd td {
+            vertical-align: top;
+            text-align: center;
+            padding: 0 10px;
+            font-size: 12pt;
+        }
+
+        .ttd-space {
+            height: 60px;
+        }
+    </style>
 </head>
+
 <body>
-<div class="page">
+    <div class="page">
 
-    <h1 class="judul">Surat Permohonan Izin<br>Camping CAI XLVII 2026</h1>
+        <h1 class="judul">Surat Permohonan Izin<br>Camping CAI XLVII 2026</h1>
 
-    <p class="intro">Yang bertanda tangan di bawah ini :</p>
+        <p class="intro">Yang bertanda tangan di bawah ini :</p>
 
-    <table class="biodata">
-        <tr>
-            <td class="label">Nama</td>
-            <td class="sep">:</td>
-            <td class="val">{{nama_peserta}}</td>
-        </tr>
-        <tr>
-            <td class="label">Kelompok</td>
-            <td class="sep">:</td>
-            <td class="val">{{kelompok}}</td>
-        </tr>
-    </table>
+        <table class="biodata">
+            <tr>
+                <td class="label">Nama</td>
+                <td class="sep">:</td>
+                <td class="val">{{nama_peserta}}</td>
+            </tr>
+            <tr>
+                <td class="label">Kelompok</td>
+                <td class="sep">:</td>
+                <td class="val">{{kelompok}}</td>
+            </tr>
+        </table>
 
-    <p>dengan ini mengajukan permohonan izin untuk tidak mengikuti acara Camping CAI XLVII Tahun 2026 dengan alasan, yaitu :</p>
+        <p>dengan ini mengajukan permohonan izin untuk tidak mengikuti acara Camping CAI XLVII Tahun 2026 dengan alasan,
+            yaitu :</p>
 
-    <div class="alasan-box">
-        <p>{{alasan}}</p>
+        <div class="alasan-box">
+            <p>{{alasan}}</p>
+        </div>
+
+        <p class="penutup">Demikian surat ini saya sampaikan untuk memohon izin kepada Bp H. Rubiyanta selaku Pembina
+            Desa dengan disaksikan kepada Bp. Pembina Kelompok.</p>
+
+        <table class="ttd">
+            <tr>
+                <td style="width: 60%;"></td>
+                <td style="width: 40%; text-align: center;">
+                    Hormat kami,<br><br><br><br><br>
+                    <div style="height: 90px;"></div>
+                    ( {{nama_peserta}} )
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin-top: 25px; font-size: 12pt;">
+            Disaksikan, ........................... 2026
+        </div>
+
+        <table class="ttd" style="margin-top:30px;">
+            <tr>
+                <td style="width:50%">Menyaksikan,<br>Pembina Kelompok</td>
+                <td style="width:50%">Menyetujui,<br>Pembina Desa</td>
+            </tr>
+            <tr>
+                <td class="ttd-space"></td>
+                <td class="ttd-space"></td>
+            </tr>
+            <tr>
+                <td>(
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    )</td>
+                <td>( H. Rubiyanta, S.Pd )</td>
+            </tr>
+        </table>
+
     </div>
-
-    <p class="penutup">Demikian surat ini saya sampaikan untuk memohon izin kepada Bp H. Rubiyanta selaku Pembina Desa dengan disaksikan kepada Bp. Pembina Kelompok.</p>
-
-    <p>Hormat kami,</p>
-
-    <table class="ttd">
-        <tr>
-            <td style="width:33%">( {{nama_peserta}} )</td>
-            <td style="width:33%">Disaksikan, ......... 2026</td>
-            <td style="width:34%"></td>
-        </tr>
-    </table>
-
-    <table class="ttd" style="margin-top:30px;">
-        <tr>
-            <td style="width:50%">Menyaksikan,<br>Pembina Kelompok</td>
-            <td style="width:50%">Menyetujui,<br>Pembina Desa</td>
-        </tr>
-        <tr>
-            <td class="ttd-space"></td>
-            <td class="ttd-space"></td>
-        </tr>
-        <tr>
-            <td>( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</td>
-            <td>( H. Rubiyanta, S.Pd )</td>
-        </tr>
-    </table>
-
-</div>
 </body>
+
 </html>
